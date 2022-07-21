@@ -33,7 +33,10 @@ fn main() {
     let slight = Slight::parse();
 
     let current_value = match slight.read() {
-        Ok(v) => v.parse::<i64>().expect("Given file has invalid data"),
+        Ok(v) => v
+            .trim()
+            .parse::<i64>()
+            .expect("Given file has invalid data"),
         Err(e) => panic!("{}", e),
     };
 

@@ -47,8 +47,7 @@ fn main() {
         },
     };
 
-    match slight.write(new_value) {
-        Err(e) => panic!("{}", e),
-        _ => (),
-    };
+    if let Err(e) = slight.write(new_value) {
+        panic!("{}", e)
+    }
 }

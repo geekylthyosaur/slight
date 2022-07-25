@@ -54,7 +54,7 @@ impl Slight {
     fn write_range(&self, r: std::slice::Iter<u8>) -> Result<(), std::io::Error> {
         for &v in r {
             write(&self.path, v)?;
-            std::thread::sleep(std::time::Duration::from_millis(16)); // 100/60
+            std::thread::sleep(std::time::Duration::from_millis(16)); // 1000/60
         }
         Ok(())
     }
@@ -109,5 +109,19 @@ fn main() {
 
     if let Err(e) = slight.write_range(v.iter()) {
         panic!("{}", e);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Slight;
+
+    #[test]
+    fn percent_to_value() {
+        assert_eq!(Slight::percent_to_value(0i64), 0i64);
+        assert_eq!(Slight::percent_to_value(100i64), 255i64);
+        assert_eq!(Slight::percent_to_value(-100i64), -255i64);
+        assert_eq!(Slight::percent_to_value(13i64), 33i64);
+        assert_eq!(Slight::percent_to_value(-62i64), -158i64);
     }
 }

@@ -1,3 +1,10 @@
+mod error;
+mod percent;
+mod value;
+
+use error::SlightError;
+use value::Value;
+
 use clap::Parser;
 
 /// An application to control backlight brightness
@@ -13,37 +20,10 @@ struct Args {
     percent: i64, // value_parser only accepts i64 / u64
 }
 
-#[derive(Debug)]
-enum SlightError {
-    IO(std::io::Error),
-    Parse,
-}
-
-impl From<std::io::Error> for SlightError {
-    fn from(e: std::io::Error) -> Self {
-        Self::IO(e)
-    }
-}
-
-impl From<std::num::ParseIntError> for SlightError {
-    fn from(_: std::num::ParseIntError) -> Self {
-        Self::Parse
-    }
-}
-
-impl std::fmt::Display for SlightError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::IO(e) => write!(f, "{}", e),
-            Self::Parse => write!(f, "Given file has invalid data"),
-        }
-    }
-}
-
 struct Slight {
+    curr_value: Value,
     path: String,
-    current_value: u8,
-    new_value: u8,
+    percent: i64,
 }
 
 impl Slight {
@@ -54,7 +34,7 @@ impl Slight {
     fn write_range(&self, r: std::slice::Iter<u8>) -> Result<(), std::io::Error> {
         for &v in r {
             write(&self.path, v)?;
-            std::thread::sleep(std::time::Duration::from_millis(16)); // 1000/60
+            std::thread::sleep(std::time::Duration::from_millis(1000/60));
         }
         Ok(())
     }
@@ -64,33 +44,14 @@ impl TryFrom<Args> for Slight {
     type Error = SlightError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
-        let current_value = read(&args.path)?.trim().parse::<u8>()?;
-        let new_value: i64 = current_value as i64 + Slight::percent_to_value(args.percent);
-        let new_value: u8 = match new_value.try_into() {
-            Ok(v) => v,
-            Err(_) => match new_value {
-                v if v > u8::MAX as i64 => u8::MAX,
-                v if v < u8::MIN as i64 => u8::MIN,
-                _ => unreachable!(),
-            },
-        };
+        let curr_value = read(&args.path)?.trim().parse::<Value>()?;
 
         Ok(Self {
-            current_value,
-            new_value,
+            curr_value,
             path: args.path,
+            percent: args.percent,
         })
     }
-}
-
-fn read(path: &String) -> Result<String, std::io::Error> {
-    Ok(String::from_utf8_lossy(&std::fs::read(path)?)
-        .as_ref()
-        .to_owned())
-}
-
-fn write(path: &String, value: u8) -> Result<(), std::io::Error> {
-    std::fs::write(path, value.to_string())
 }
 
 fn main() {
@@ -101,15 +62,28 @@ fn main() {
         Err(e) => panic!("{}", e),
     };
 
-    let v = if slight.current_value < slight.new_value {
-        (slight.current_value..=slight.new_value).collect::<Vec<u8>>()
+    /*
+
+    let v = if slight.curr_value < slight.new_value {
+        (slight.curr_value..=slight.new_value).collect::<Vec<u8>>()
     } else {
-        ((slight.new_value..=slight.current_value).rev()).collect::<Vec<u8>>()
+        ((slight.new_value..=slight.curr_value).rev()).collect::<Vec<u8>>()
     };
 
     if let Err(e) = slight.write_range(v.iter()) {
         panic!("{}", e);
     }
+    */
+}
+
+fn read(path: &String) -> Result<String, std::io::Error> {
+    Ok(String::from_utf8_lossy(&std::fs::read(path)?)
+        .as_ref()
+        .to_owned())
+}
+
+fn write(path: &String, value: u8) -> Result<(), std::io::Error> {
+    std::fs::write(path, value.to_string())
 }
 
 #[cfg(test)]

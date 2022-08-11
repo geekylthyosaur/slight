@@ -1,8 +1,7 @@
-use std::{
-    num::ParseIntError,
-    io::Error as IOError,
-    fmt::{Display, Formatter, Result as FmtResult},
-};
+use std::fmt::{Display, Formatter, Result as FmtResult};
+
+use crate::io::IOError;
+use crate::value::ParseError;
 
 #[derive(Debug)]
 pub enum SlightError {
@@ -16,8 +15,8 @@ impl From<IOError> for SlightError {
     }
 }
 
-impl From<ParseIntError> for SlightError {
-    fn from(_: ParseIntError) -> Self {
+impl From<ParseError> for SlightError {
+    fn from(_: ParseError) -> Self {
         Self::Parse
     }
 }

@@ -1,8 +1,10 @@
 mod error;
+mod io;
 mod percent;
 mod value;
 
 use error::SlightError;
+use io::{read, write};
 use value::Value;
 
 use clap::Parser;
@@ -34,7 +36,7 @@ impl Slight {
     fn write_range(&self, r: std::slice::Iter<u8>) -> Result<(), std::io::Error> {
         for &v in r {
             write(&self.path, v)?;
-            std::thread::sleep(std::time::Duration::from_millis(1000/60));
+            std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
         }
         Ok(())
     }
@@ -74,16 +76,6 @@ fn main() {
         panic!("{}", e);
     }
     */
-}
-
-fn read(path: &String) -> Result<String, std::io::Error> {
-    Ok(String::from_utf8_lossy(&std::fs::read(path)?)
-        .as_ref()
-        .to_owned())
-}
-
-fn write(path: &String, value: u8) -> Result<(), std::io::Error> {
-    std::fs::write(path, value.to_string())
 }
 
 #[cfg(test)]

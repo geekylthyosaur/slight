@@ -26,6 +26,10 @@ impl std::str::FromStr for Value {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self { current: s.trim().parse::<i64>()?, max: None, min: None })
+        Ok(Self {
+            current: s.trim().parse::<i64>()?,
+            max: None,
+            min: None,
+        })
     }
 }

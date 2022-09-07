@@ -1,10 +1,7 @@
 use std::path::Path;
 use std::str::FromStr;
 
-use crate::{
-    error::SlightError,
-    value::Value,
-};
+use crate::{error::SlightError, value::Value};
 
 pub type IOError = std::io::Error;
 

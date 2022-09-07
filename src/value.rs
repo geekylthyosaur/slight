@@ -1,19 +1,17 @@
-use std::num::ParseIntError;
-use std::str::FromStr;
+pub type ParseError = std::num::ParseIntError;
 
-pub struct Value(i64);
-pub type ParseError = ParseIntError;
-
-impl Value {
-    pub fn inc_by(&mut self, d: i64) {
-        self.0 += d
-    }
+pub struct Value {
+    current: i64,
+    max: i64,
+    min: i64,
 }
 
-impl FromStr for Value {
-    type Err = ParseError;
+impl Value {
+    pub fn new(current: i64, max: i64, min: i64) -> Self {
+        Self { current, max, min }
+    }
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Value(s.trim().parse()?))
+    pub fn iter_to(&mut self, thr: i64) -> impl Iterator<Item=i64> {
+        self.current..thr
     }
 }

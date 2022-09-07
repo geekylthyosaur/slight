@@ -1,4 +1,4 @@
-pub type ParseError = std::num::ParseIntError;
+use std::string::ToString;
 
 pub struct Value {
     current: i64,
@@ -11,7 +11,13 @@ impl Value {
         Self { current, max, min }
     }
 
-    pub fn iter_to(&mut self, thr: i64) -> impl Iterator<Item=i64> {
-        self.current..thr
+    pub fn ch(&mut self, new: i64) {
+        self.current = new;
+    }
+}
+
+impl ToString for Value {
+    fn to_string(&self) -> String {
+        self.current.to_string()
     }
 }

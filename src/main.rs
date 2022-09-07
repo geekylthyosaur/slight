@@ -20,7 +20,7 @@ struct Args {
 
     /// Percent
     #[clap(value_parser(-100..=100), allow_hyphen_values = true)]
-    percent: i64, // value_parser only accepts i64 / u64
+    percent: i64, // value_parser only accepts i64 & u64
 }
 
 impl TryFrom<Args> for Slight {

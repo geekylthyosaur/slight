@@ -1,19 +1,34 @@
 use std::path::Path;
 
-use crate::error::SlightError;
+use crate::{
+    error::SlightError,
+    value::Value,
+};
 
 pub type IOError = std::io::Error;
 
-pub fn read(path: &Path) -> Result<String, IOError> {
-    Ok(String::from_utf8_lossy(&std::fs::read(path)?)
-        .as_ref()
-        .to_owned())
+pub struct IO {
+    path: Path,
+    value: Value,
 }
 
-pub fn read_num(path: &Path) -> Result<i64, SlightError> {
-    Ok(read(path)?.trim().parse::<i64>()?)
+impl IO {
+    pub fn new(path: Path, value: Value) -> Self {
+        Self { path, value }
+    }
+
+    pub fn read(&self) -> Result<String, IOError> {
+        Ok(String::from_utf8_lossy(&std::fs::read(self.path)?)
+            .as_ref()
+            .to_owned())
+    }
+
+    pub fn read_num(&self) -> Result<i64, SlightError> {
+        Ok(self.read()?.trim().parse::<i64>()?)
+    }
+
+    pub fn write(&self) -> Result<(), IOError> {
+        std::fs::write(self.path, self.value.to_string())
+    }
 }
 
-pub fn write(path: &String, value: u8) -> Result<(), IOError> {
-    std::fs::write(path, value.to_string())
-}

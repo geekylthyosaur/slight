@@ -1,13 +1,13 @@
-use std::string::ToString;
+pub type ParseError = std::num::ParseIntError;
 
 pub struct Value {
     current: i64,
-    max: i64,
-    min: i64,
+    max: Option<i64>,
+    min: Option<i64>,
 }
 
 impl Value {
-    pub fn new(current: i64, max: i64, min: i64) -> Self {
+    pub fn new(current: i64, max: Option<i64>, min: Option<i64>) -> Self {
         Self { current, max, min }
     }
 
@@ -16,8 +16,16 @@ impl Value {
     }
 }
 
-impl ToString for Value {
+impl std::string::ToString for Value {
     fn to_string(&self) -> String {
         self.current.to_string()
+    }
+}
+
+impl std::str::FromStr for Value {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self { current: s.trim().parse::<i64>()?, max: None, min: None })
     }
 }

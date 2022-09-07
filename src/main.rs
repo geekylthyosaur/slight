@@ -23,20 +23,6 @@ struct Args {
     percent: i64, // value_parser only accepts i64 & u64
 }
 
-impl TryFrom<Args> for Slight {
-    type Error = SlightError;
-
-    fn try_from(args: Args) -> Result<Self, Self::Error> {
-        let path = Path::new(&args.path);
-        let v = Value::new(
-            read_as_num(&path.join(CURRENT_BRIGHTNESS_FILENAME))?,
-            read_as_num(&path.join(MAX_BRIGHTNESS_FILENAME))?,
-            0,
-        );
-        Ok(Self { value: v })
-    }
-}
-
 fn main() {
     let args = Args::parse();
 
@@ -46,10 +32,3 @@ fn main() {
     };
 }
 
-#[cfg(test)]
-mod tests {
-    use super::Slight;
-
-    #[test]
-    fn percent_to_value() {}
-}

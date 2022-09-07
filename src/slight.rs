@@ -1,28 +1,17 @@
 use crate::error::SlightError;
-use crate::io::read_num;
-use crate::value::Value;
+use crate::io::IO;
 use crate::Args;
 use std::path::Path;
 
-const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
-const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
-
-pub struct Slight {
-    value: Value,
-}
+pub struct Slight;
 
 impl TryFrom<Args> for Slight {
     type Error = SlightError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
         let path = Path::new(&args.path);
-        let v = Value::new(
-            read_num(&path.join(CURRENT_BRIGHTNESS_FILENAME))?,
-            read_num(&path.join(MAX_BRIGHTNESS_FILENAME))?,
-            0,
-        );
-
-        Ok(Self { value: v })
+        let io = IO::try_new(path);
+        Ok(Self {})
     }
 }
 

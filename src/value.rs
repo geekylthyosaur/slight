@@ -11,6 +11,14 @@ impl Value {
         Self { current, max, min }
     }
 
+    pub fn set_max(&mut self, max: i64) {
+        self.max = Some(max);
+    }
+
+    pub fn set_min(&mut self, min: i64) {
+        self.min = Some(min);
+    }
+
     pub fn ch(&mut self, new: i64) {
         self.current = new;
     }

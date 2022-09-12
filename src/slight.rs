@@ -3,15 +3,22 @@ use crate::io::IO;
 use crate::Args;
 use std::path::Path;
 
-pub struct Slight;
+pub struct Slight<'a> {
+    io: IO<'a>,
+}
 
-impl TryFrom<Args> for Slight {
+impl<'a> Slight<'a> {
+    pub fn range(&self) {
+    }
+}
+
+impl<'a> TryFrom<Args> for Slight<'a> {
     type Error = SlightError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
         let path = Path::new(&args.path);
-        let io = IO::try_new(path);
-        Ok(Self {})
+        let io = IO::try_new(path)?;
+        Ok(Self { io })
     }
 }
 

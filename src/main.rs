@@ -30,4 +30,7 @@ fn main() {
         Ok(v) => v,
         Err(e) => panic!("{}", e),
     };
+
+    for i in slight.range() {
+    }
 }

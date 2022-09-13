@@ -1,22 +1,14 @@
 pub type ParseError = std::num::ParseIntError;
 
 pub struct Value {
-    current: i64,
-    max: Option<i64>,
-    min: Option<i64>,
+    pub current: i64,
+    pub max: i64,
+    pub min: i64,
 }
 
 impl Value {
-    pub fn new(current: i64, max: Option<i64>, min: Option<i64>) -> Self {
-        Self { current, max, min }
-    }
-
-    pub fn set_max(&mut self, max: i64) {
-        self.max = Some(max);
-    }
-
-    pub fn set_min(&mut self, min: i64) {
-        self.min = Some(min);
+    pub fn new(current: i64) -> Self {
+        Self { current, ..Default::default() }
     }
 
     pub fn ch(&mut self, new: i64) {
@@ -34,10 +26,18 @@ impl std::str::FromStr for Value {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self {
-            current: s.trim().parse::<i64>()?,
-            max: None,
-            min: None,
-        })
+        Ok(Self::new(
+            s.trim().parse::<i64>()?,
+        ))
+    }
+}
+
+impl Default for Value {
+    fn default() -> Self {
+        Self {
+            current: 0,
+            max: 255,
+            min: 0,
+        }
     }
 }

@@ -1,32 +1,40 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use crate::{error::SlightError, value::Value};
 
 pub type IOError = std::io::Error;
 
-pub struct IO<'a> {
-    path: &'a Path,
-    value: Value,
+pub struct IO {
+    path: PathBuf,
+    pub value: Value,
 }
 
-const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
-const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
-const MIN_BRIGHTNESS_FILENAME: &str = "min_brightness";
+pub const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
+pub const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
+pub const MIN_BRIGHTNESS_FILENAME: &str = "min_brightness";
 
-impl<'a> IO<'a> {
-    pub fn try_new(path: &'a Path) -> Result<Self, SlightError> {
+impl IO {
+    pub fn try_new(path: &Path) -> Result<Self, SlightError> {
         let value = Value::from_str(&read(&path.join(CURRENT_BRIGHTNESS_FILENAME))?)?;
 
-        Ok(Self { path, value })
+        Ok(Self { path: path.to_path_buf(), value })
     }
 
-    pub fn write(&self) -> Result<(), IOError> {
-        std::fs::write(self.path, self.value.to_string())
+    pub fn set_value(&mut self, value: i64) {
+        self.value.ch(value)
+    }
+
+    pub fn get_value(&self) -> i64 {
+        self.value.current
+    }
+
+    pub fn write(&self, filename: &str) -> Result<(), IOError> {
+        std::fs::write(&self.path.join(filename), self.value.to_string())
     }
 
     pub fn read(&self) -> Result<i64, SlightError> {
-        Ok(read(self.path)?.trim().parse::<i64>()?)
+        Ok(read(&self.path)?.trim().parse::<i64>()?)
     }
 }
 

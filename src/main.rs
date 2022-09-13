@@ -3,12 +3,9 @@ mod io;
 mod slight;
 mod value;
 
-use error::SlightError;
 use slight::Slight;
 
 use clap::Parser;
-
-use std::path::Path;
 
 /// An application to control backlight brightness
 #[derive(Parser)]
@@ -19,18 +16,21 @@ struct Args {
     path: String,
 
     /// Percent
-    #[clap(value_parser(-100..=100), allow_hyphen_values = true)]
-    percent: i64, // value_parser only accepts i64 & u64
+    #[clap(allow_hyphen_values = true)]
+    percent: f32,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let slight: Slight = match args.try_into() {
+    let mut slight: Slight = match args.try_into() {
         Ok(v) => v,
         Err(e) => panic!("{}", e),
     };
 
     for i in slight.range() {
+        slight.set_value(i).unwrap();
+        println!("{} ", i);
+        std::thread::sleep(std::time::Duration::from_millis(64));
     }
 }

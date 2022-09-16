@@ -7,7 +7,10 @@ pub struct Value {
 }
 
 impl Value {
-    pub fn new(current: i64) -> Self {
+    pub fn new(current: i64, max: Option<i64>, min: Option<i64>) -> Self {
+        if let Some(max) = max {
+            return Self { current, max, ..Default::default() }
+        }
         Self { current, ..Default::default() }
     }
 
@@ -28,6 +31,8 @@ impl std::str::FromStr for Value {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self::new(
             s.trim().parse::<i64>()?,
+            None,
+            None
         ))
     }
 }

@@ -16,7 +16,14 @@ pub const MIN_BRIGHTNESS_FILENAME: &str = "min_brightness";
 
 impl IO {
     pub fn try_new(path: &Path) -> Result<Self, SlightError> {
-        let value = Value::from_str(&read(&path.join(CURRENT_BRIGHTNESS_FILENAME))?)?;
+        let mut value = Value::from_str(&read(&path.join(CURRENT_BRIGHTNESS_FILENAME))?)?;
+        let max_value = match read(&path.join(MAX_BRIGHTNESS_FILENAME)) {
+            Ok(s) => Some(s.trim().parse::<i64>()?),
+            _ => None,
+        };
+        if let Some(max) = max_value {
+            value.max = max;
+        }
 
         Ok(Self { path: path.to_path_buf(), value })
     }

@@ -9,6 +9,10 @@ pub struct Slight {
 }
 
 impl Slight {
+    fn new(io: IO, percent: f32) -> Self {
+        Self { io, percent }
+    }
+
     pub fn range(&self) -> impl Iterator<Item = i64> {
         let curr = self.io.get_value();
         let new = match curr + percent_to_value(self.percent, self.io.value.max) {
@@ -41,7 +45,7 @@ impl TryFrom<Args> for Slight {
         let path = Path::new(&args.path);
         let io = IO::try_new(path)?;
         let percent = args.percent;
-        Ok(Self { io, percent })
+        Ok(Slight::new(io, percent))
     }
 }
 

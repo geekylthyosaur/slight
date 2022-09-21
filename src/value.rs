@@ -1,9 +1,9 @@
 pub type ParseError = std::num::ParseIntError;
 
 pub struct Value {
-    pub current: i64,
-    pub max: i64,
-    pub min: i64,
+    current: i64,
+    max: i64,
+    min: i64,
 }
 
 impl Value {
@@ -12,6 +12,16 @@ impl Value {
             return Self { current, max, ..Default::default() }
         }
         Self { current, ..Default::default() }
+    }
+
+    pub fn get(&self) -> i64 {
+        self.current
+    }
+
+    pub fn set(&mut self, new: i64) {
+        if (self.min..self.max).contains(&new) {
+            self.current = new
+        }
     }
 
     pub fn ch(&mut self, new: i64) {

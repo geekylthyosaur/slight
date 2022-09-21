@@ -30,7 +30,6 @@ fn main() {
 
     for i in slight.range() {
         slight.set_value(i).unwrap();
-        println!("{} ", i);
         std::thread::sleep(std::time::Duration::from_millis(64));
     }
 }

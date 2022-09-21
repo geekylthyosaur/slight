@@ -23,27 +23,11 @@ impl Value {
             self.current = new
         }
     }
-
-    pub fn ch(&mut self, new: i64) {
-        self.current = new;
-    }
 }
 
 impl std::string::ToString for Value {
     fn to_string(&self) -> String {
         self.current.to_string()
-    }
-}
-
-impl std::str::FromStr for Value {
-    type Err = ParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::new(
-            s.trim().parse::<i64>()?,
-            None,
-            None
-        ))
     }
 }
 

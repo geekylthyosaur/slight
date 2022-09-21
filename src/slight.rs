@@ -1,5 +1,5 @@
 use crate::error::SlightError;
-use crate::io::{IO, CURRENT_BRIGHTNESS_FILENAME};
+use crate::io::IO;
 use crate::Args;
 use std::path::Path;
 
@@ -15,11 +15,7 @@ impl Slight {
 
     pub fn range(&self) -> impl Iterator<Item = i64> {
         let curr = self.io.get_value();
-        let new = match curr + percent_to_value(self.percent, self.io.value.max) {
-            v if v > self.io.value.max => self.io.value.max,
-            v if v < self.io.value.min => self.io.value.min,
-            v => v,
-        };
+        let new = curr + percent_to_value(self.percent, self.io.value.max);
         let step = match i64::abs(curr - new) / 4 {
             s if s > 0 => s as usize,
             _ => 1usize,
@@ -32,9 +28,7 @@ impl Slight {
     }
 
     pub fn set_value(&mut self, v: i64) -> Result<(), SlightError>  {
-        self.io.set_value(v);
-        self.io.write(CURRENT_BRIGHTNESS_FILENAME)?;
-        Ok(())
+        Ok(self.io.set_value(v)?)
     }
 }
 

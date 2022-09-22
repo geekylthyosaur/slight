@@ -31,6 +31,10 @@ impl IO {
     pub fn get_value(&self) -> i64 {
         self.value.get()
     }
+
+    pub fn max_value(&self) -> i64 {
+        self.value.max()
+    }
 }
 
 pub fn write(path: &Path, value: i64) -> Result<(), IOError> {

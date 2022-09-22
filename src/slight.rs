@@ -15,7 +15,7 @@ impl Slight {
 
     pub fn range(&self) -> impl Iterator<Item = i64> {
         let curr = self.io.get_value();
-        let new = curr + percent_to_value(self.percent, self.io.value.max);
+        let new = curr + percent_to_value(self.percent, self.io.max_value());
         let step = match i64::abs(curr - new) / 4 {
             s if s > 0 => s as usize,
             _ => 1usize,

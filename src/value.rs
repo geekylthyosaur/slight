@@ -23,6 +23,10 @@ impl Value {
             self.current = new
         }
     }
+
+    pub fn max(&self) -> i64 {
+        self.max
+    }
 }
 
 impl std::string::ToString for Value {

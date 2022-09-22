@@ -3,6 +3,8 @@ use crate::io::IO;
 use crate::Args;
 use std::path::Path;
 
+const NUMBER_OF_STEPS: i64 = 4;
+
 pub struct Slight {
     io: IO,
     percent: f32,
@@ -16,10 +18,11 @@ impl Slight {
     pub fn range(&self) -> impl Iterator<Item = i64> {
         let curr = self.io.get_value();
         let new = curr + percent_to_value(self.percent, self.io.max_value());
-        let step = match i64::abs(curr - new) / 4 {
-            s if s > 0 => s as usize,
-            _ => 1usize,
-        };
+        let step = match i64::abs(curr - new) / (NUMBER_OF_STEPS - 1) { // -1 because rounding
+                                                                        // gives extra step
+            s if s > 0 => s,
+            _ => 1,
+        } as usize;
         if curr < new {
             (curr..=new).step_by(step).collect::<Vec<i64>>().into_iter()
         } else {

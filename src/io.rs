@@ -20,12 +20,18 @@ impl IO {
 
         let value = Value::new(current, max_value, None);
 
-        Ok(Self { path: path.to_path_buf(), value })
+        Ok(Self {
+            path: path.to_path_buf(),
+            value,
+        })
     }
 
     pub fn set_value(&mut self, value: i64) -> Result<(), SlightError> {
         self.value.set(value);
-        Ok(write(&self.path.join(CURRENT_BRIGHTNESS_FILENAME), self.value.get())?)
+        Ok(write(
+            &self.path.join(CURRENT_BRIGHTNESS_FILENAME),
+            self.value.get(),
+        )?)
     }
 
     pub fn get_value(&self) -> i64 {
@@ -46,6 +52,5 @@ pub fn read(path: &Path) -> Result<i64, SlightError> {
         .as_ref()
         .to_owned()
         .trim()
-        .parse::<i64>()?
-        )
+        .parse::<i64>()?)
 }

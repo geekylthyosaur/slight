@@ -3,11 +3,13 @@ mod io;
 mod slight;
 mod value;
 
+use std::time::Duration;
+
 use slight::Slight;
 
 use clap::Parser;
 
-const TIME_BETWEEN_STEPS: std::time::Duration = std::time::Duration::from_millis(64);
+const TIME_BETWEEN_STEPS: Duration = Duration::from_millis(64);
 
 /// An application to control backlight brightness
 #[derive(Parser)]

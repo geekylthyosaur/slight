@@ -7,7 +7,7 @@ pub struct Value {
 }
 
 impl Value {
-    pub fn new(current: i64, max: Option<i64>, min: Option<i64>) -> Self {
+    pub fn new(current: i64, max: Option<i64>, _min: Option<i64>) -> Self {
         if let Some(max) = max {
             return Self {
                 current,
@@ -21,14 +21,16 @@ impl Value {
         }
     }
 
-    pub fn get(&self) -> i64 {
-        self.current
+    pub fn set(&mut self, new: i64) -> Option<i64> {
+        if (self.min..self.max).contains(&new) {
+            self.current = new;
+            return Some(new);
+        }
+        None
     }
 
-    pub fn set(&mut self, new: i64) {
-        if (self.min..self.max).contains(&new) {
-            self.current = new
-        }
+    pub fn get(&self) -> i64 {
+        self.current
     }
 
     pub fn max(&self) -> i64 {

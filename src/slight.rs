@@ -18,9 +18,8 @@ impl Slight {
     pub fn range(&self) -> impl Iterator<Item = i64> {
         let curr = self.io.get_value();
         let new = curr + percent_to_value(self.percent, self.io.max_value());
+        // -1 because rounding gives extra step
         let step = match i64::abs(curr - new) / (NUMBER_OF_STEPS - 1) {
-            // -1 because rounding
-            // gives extra step
             s if s > 0 => s,
             _ => 1,
         } as usize;
@@ -36,7 +35,7 @@ impl Slight {
     }
 
     pub fn set_value(&mut self, v: i64) -> Result<(), SlightError> {
-        Ok(self.io.set_value(v)?)
+        self.io.set_value(v)
     }
 }
 

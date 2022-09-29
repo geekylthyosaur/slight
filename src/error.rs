@@ -3,6 +3,8 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use crate::io::IOError;
 use crate::value::ParseError;
 
+pub type Result<T> = std::result::Result<T, SlightError>;
+
 #[derive(Debug)]
 pub enum SlightError {
     IO(IOError),

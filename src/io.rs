@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{error::SlightError, value::Value};
+use crate::{error::Result, value::Value};
 
 pub type IOError = std::io::Error;
 
@@ -14,7 +14,7 @@ pub struct IO {
 }
 
 impl IO {
-    pub fn try_new(path: &Path) -> Result<Self, SlightError> {
+    pub fn try_new(path: &Path) -> Result<Self> {
         let current = read(&path.join(CURRENT_BRIGHTNESS_FILENAME))?;
         let max_value = read(&path.join(MAX_BRIGHTNESS_FILENAME)).ok();
         let min_value = read(&path.join(MIN_BRIGHTNESS_FILENAME)).ok();
@@ -27,7 +27,7 @@ impl IO {
         })
     }
 
-    pub fn set_value(&mut self, value: i64) -> Result<(), SlightError> {
+    pub fn set_value(&mut self, value: i64) -> Result<()> {
         if let Some(new) = self.value.set(value) {
             write(&self.path.join(CURRENT_BRIGHTNESS_FILENAME), new)?
         }
@@ -43,11 +43,11 @@ impl IO {
     }
 }
 
-fn write(path: &Path, value: i64) -> Result<(), IOError> {
-    std::fs::write(path, value.to_string())
+fn write(path: &Path, value: i64) -> Result<()> {
+    Ok(std::fs::write(path, value.to_string())?)
 }
 
-fn read(path: &Path) -> Result<i64, SlightError> {
+fn read(path: &Path) -> Result<i64> {
     Ok(String::from_utf8_lossy(&std::fs::read(path)?)
         .as_ref()
         .to_owned()

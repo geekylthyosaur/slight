@@ -1,4 +1,4 @@
-use crate::error::SlightError;
+use crate::error::{Result, SlightError};
 use crate::io::IO;
 use crate::Args;
 use std::path::Path;
@@ -34,7 +34,7 @@ impl Slight {
         }
     }
 
-    pub fn set_value(&mut self, v: i64) -> Result<(), SlightError> {
+    pub fn set_value(&mut self, v: i64) -> Result<()> {
         self.io.set_value(v)
     }
 }
@@ -42,7 +42,7 @@ impl Slight {
 impl TryFrom<Args> for Slight {
     type Error = SlightError;
 
-    fn try_from(args: Args) -> Result<Self, Self::Error> {
+    fn try_from(args: Args) -> std::result::Result<Self, Self::Error> {
         let path = Path::new(&args.path);
         let io = IO::try_new(path)?;
         let percent = args.percent;

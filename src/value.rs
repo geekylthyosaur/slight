@@ -1,13 +1,12 @@
 pub type ParseError = std::num::ParseIntError;
 
 pub struct Value {
-    current: i64,
-    max: i64,
-    min: i64,
+    current: usize,
+    max: i32,
 }
 
 impl Value {
-    pub fn new(current: i64, max: Option<i64>, _min: Option<i64>) -> Self {
+    pub fn new(current: i32, max: Option<i32>) -> Self {
         if let Some(max) = max {
             return Self {
                 current,
@@ -21,7 +20,7 @@ impl Value {
         }
     }
 
-    pub fn set(&mut self, new: i64) -> Option<i64> {
+    pub fn set(&mut self, new: i32) -> Option<i32> {
         if (self.min..self.max).contains(&new) {
             self.current = new;
             return Some(new);
@@ -29,12 +28,33 @@ impl Value {
         None
     }
 
-    pub fn get(&self) -> i64 {
+    pub fn get(&self) -> i32 {
         self.current
     }
 
-    pub fn max(&self) -> i64 {
+    pub fn max(&self) -> i32 {
         self.max
+    }
+}
+
+/*
+impl std::io::Write for Value {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+    }
+}
+
+impl std::io::Read for Value {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+    }
+}
+*/
+
+impl From<Percent> for Value {
+    fn from(p: Percent) -> Self {
+        (p.powf(4.) * 255. * f32::powf(255., -4.) as f32) as i32
     }
 }
 

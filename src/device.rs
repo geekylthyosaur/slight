@@ -1,10 +1,14 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
 
-use crate::{class::Class, io::IO};
+use crate::{
+    class::Class,
+    error::{Result, SlightError},
+    io::IO,
+};
 
-const CURRENT_BRIGHTNESS_FILENAME: &'static str = "brightness";
-const MAX_BRIGHTNESS_FILENAME: &'static str = "max_brightness";
+const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
+const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
 #[derive(Debug)]
 pub struct Device {
@@ -15,7 +19,7 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn try_new(path: &Path) -> Result<Self, ()> {
+    pub fn try_new(path: &Path) -> Result<Self> {
         Ok(Device {
             class: path.try_into()?,
             id: path.try_into()?,
@@ -39,12 +43,13 @@ impl Display for Device {
 pub struct Id(String);
 
 impl TryFrom<&Path> for Id {
-    type Error = todo!();
+    type Error = SlightError;
 
-    fn try_from(p: &Path) -> Result<Self, Self::Error> {
+    // TODO: std::result
+    fn try_from(p: &Path) -> std::result::Result<Self, Self::Error> {
         match IO::dir(p) {
             Some(s) => Ok(Id(s.to_owned())),
-            None => Err(todo!()),
+            None => Err(SlightError::DeviceBroken(p.to_path_buf())),
         }
     }
 }

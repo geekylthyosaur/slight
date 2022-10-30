@@ -1,11 +1,11 @@
-use crate::io::IO;
+use crate::{error::SlightError, io::IO};
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::{Path, PathBuf};
 
-const PATH: &'static str = "/sys/class";
-const BACKLIGHT: &'static str = "backlight";
-const LED: &'static str = "leds";
+const PATH: &str = "/sys/class";
+const BACKLIGHT: &str = "backlight";
+const LED: &str = "leds";
 
 #[derive(Debug)]
 pub enum Class {
@@ -24,14 +24,13 @@ impl Class {
 }
 
 impl TryFrom<&Path> for Class {
-    type Error = todo!();
+    type Error = SlightError;
 
     fn try_from(p: &Path) -> Result<Self, Self::Error> {
         match IO::parent_dir(p) {
             Some(BACKLIGHT) => Ok(Class::Backlight),
             Some(LED) => Ok(Class::Led),
-            Some(_) => Err(todo!()),
-            None => Err(todo!()),
+            Some(_) | None => Err(SlightError::DeviceBroken(p.to_path_buf())),
         }
     }
 }

@@ -1,4 +1,9 @@
+use crate::error::Result;
+
 use std::path::Path;
+
+pub type IOError = std::io::Error;
+pub type ParseError = std::num::ParseIntError;
 
 pub struct IO;
 
@@ -7,7 +12,7 @@ impl IO {
         todo!("Read dirs from given path")
     }
 
-    pub fn read_number(path: &Path) -> Result<usize, todo!()> {
+    pub fn read_number(path: &Path) -> Result<usize> {
         todo!("Read & parse number from file")
     }
 

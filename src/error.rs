@@ -1,6 +1,6 @@
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use crate::io::IOError;
@@ -13,6 +13,12 @@ pub enum SlightError {
     DeviceBroken(PathBuf),
     IO(IOError),
     Parse,
+}
+
+impl From<&Path> for SlightError {
+    fn from(p: &Path) -> Self {
+        Self::DeviceBroken(p.to_path_buf())
+    }
 }
 
 impl From<IOError> for SlightError {

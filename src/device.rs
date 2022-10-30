@@ -49,7 +49,7 @@ impl TryFrom<&Path> for Id {
     fn try_from(p: &Path) -> std::result::Result<Self, Self::Error> {
         match IO::dir(p) {
             Some(s) => Ok(Id(s.to_owned())),
-            None => Err(SlightError::DeviceBroken(p.to_path_buf())),
+            None => Err(p.into()),
         }
     }
 }

@@ -30,7 +30,7 @@ impl TryFrom<&Path> for Class {
         match IO::parent_dir(p) {
             Some(BACKLIGHT) => Ok(Class::Backlight),
             Some(LED) => Ok(Class::Led),
-            Some(_) | None => Err(SlightError::DeviceBroken(p.to_path_buf())),
+            Some(_) | None => Err(p.into()),
         }
     }
 }

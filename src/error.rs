@@ -1,14 +1,24 @@
-use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    path::{Path, PathBuf},
+};
 
 use crate::io::IOError;
-use crate::value::ParseError;
+use crate::io::ParseError;
 
 pub type Result<T> = std::result::Result<T, SlightError>;
 
 #[derive(Debug)]
 pub enum SlightError {
+    DeviceBroken(PathBuf),
     IO(IOError),
     Parse,
+}
+
+impl From<&Path> for SlightError {
+    fn from(p: &Path) -> Self {
+        Self::DeviceBroken(p.to_path_buf())
+    }
 }
 
 impl From<IOError> for SlightError {
@@ -26,6 +36,7 @@ impl From<ParseError> for SlightError {
 impl Display for SlightError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
+            Self::DeviceBroken(p) => write!(f, "No valid device at {}", p.display()),
             Self::IO(e) => write!(f, "{}", e),
             Self::Parse => write!(f, "Given file has invalid data"),
         }

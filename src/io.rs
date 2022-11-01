@@ -1,56 +1,48 @@
-use std::path::{Path, PathBuf};
+use crate::error::Result;
 
-use crate::{error::Result, value::Value};
+use std::path::Path;
 
 pub type IOError = std::io::Error;
+pub type ParseError = std::num::ParseIntError;
 
-pub const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
-pub const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
-pub const MIN_BRIGHTNESS_FILENAME: &str = "min_brightness";
-
-pub struct IO {
-    path: PathBuf,
-    value: Value,
-}
+pub struct IO;
 
 impl IO {
-    pub fn try_new(path: &Path) -> Result<Self> {
-        let current = read(&path.join(CURRENT_BRIGHTNESS_FILENAME))?;
-        let max_value = read(&path.join(MAX_BRIGHTNESS_FILENAME)).ok();
-        let min_value = read(&path.join(MIN_BRIGHTNESS_FILENAME)).ok();
-
-        let value = Value::new(current, max_value, min_value);
-
-        Ok(Self {
-            path: path.to_path_buf(),
-            value,
-        })
-    }
-
-    pub fn set_value(&mut self, value: i64) -> Result<()> {
-        if let Some(new) = self.value.set(value) {
-            write(&self.path.join(CURRENT_BRIGHTNESS_FILENAME), new)?
+    pub fn scan(path: &Path) -> Result<Vec<String>> {
+        match path.read_dir() {
+            Ok(v) => {
+                // TODO: make this cleaner
+                Ok(v.filter(|v| v.is_ok())
+                    .map(|v| v.unwrap())
+                    .filter(|v| v.file_type().unwrap().is_dir())
+                    .map(|v| v.file_name().into_string())
+                    .filter(|v| v.is_ok())
+                    .map(|v| v.unwrap())
+                    .collect::<Vec<_>>())
+            }
+            Err(_) => todo!(),
         }
-        Ok(())
     }
 
-    pub fn get_value(&self) -> i64 {
-        self.value.get()
+    pub fn read_number(path: &Path) -> Result<usize> {
+        Ok(String::from_utf8_lossy(&std::fs::read(path)?)
+            .trim()
+            .parse::<usize>()?)
     }
 
-    pub fn max_value(&self) -> i64 {
-        self.value.max()
+    pub fn write_number(path: &Path, value: usize) -> Result<()> {
+        Ok(std::fs::write(path, value.to_string())?)
     }
-}
 
-fn write(path: &Path, value: i64) -> Result<()> {
-    Ok(std::fs::write(path, value.to_string())?)
-}
+    pub fn dir(path: &Path) -> Option<&str> {
+        if path.is_dir() {
+            path.file_name()?.to_str()
+        } else {
+            None
+        }
+    }
 
-fn read(path: &Path) -> Result<i64> {
-    Ok(String::from_utf8_lossy(&std::fs::read(path)?)
-        .as_ref()
-        .to_owned()
-        .trim()
-        .parse::<i64>()?)
+    pub fn parent_dir(path: &Path) -> Option<&str> {
+        path.parent()?.file_name()?.to_str()
+    }
 }

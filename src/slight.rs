@@ -10,7 +10,7 @@ impl Slight {
         Slight::default()
     }
 
-    fn read_devices(&mut self) {
+    pub fn read_devices(&mut self) {
         let classes = vec![Class::Backlight.path(), Class::Led.path()];
         for class in classes {
             match IO::scan(&class) {

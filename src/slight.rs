@@ -13,14 +13,17 @@ impl Slight {
     fn read_devices(&mut self) {
         let classes = vec![Class::Backlight.path(), Class::Led.path()];
         for class in classes {
-            if let Some(device_ids) = IO::scan(&class) {
-                for id in device_ids {
-                    let device = match Device::try_new(&class.join(id)) {
-                        Ok(v) => v,
-                        Err(e) => todo!("Error while reading device, skipping"),
-                    };
-                    self.devices.as_mut().unwrap().push(device);
+            match IO::scan(&class) {
+                Ok(device_ids) => {
+                    for id in device_ids {
+                        let device = match Device::try_new(&class.join(id)) {
+                            Ok(v) => v,
+                            Err(_) => todo!("Error while reading device, skipping"),
+                        };
+                        self.devices.as_mut().unwrap().push(device);
+                    }
                 }
+                Err(_) => todo!("Log out error and continue"),
             }
         }
     }

@@ -14,7 +14,8 @@ impl IO {
                 // TODO: make this cleaner
                 Ok(v.filter(|v| v.is_ok())
                     .map(|v| v.unwrap())
-                    .filter(|v| v.file_type().unwrap().is_dir())
+                    // TODO: this check is unnececary but returns []
+                    // .filter(|v| v.file_type().unwrap().is_dir())
                     .map(|v| v.file_name().into_string())
                     .filter(|v| v.is_ok())
                     .map(|v| v.unwrap())

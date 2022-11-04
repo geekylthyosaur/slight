@@ -1,8 +1,10 @@
+use std::path::PathBuf;
+
 use crate::{class::Class, device::Device, io::IO};
 
 #[derive(Default)]
 pub struct Slight {
-    devices: Option<Vec<Device>>,
+    devices: Vec<Device>,
 }
 
 impl Slight {
@@ -11,19 +13,32 @@ impl Slight {
     }
 
     pub fn read_devices(&mut self) {
-        let classes = vec![Class::Backlight.path(), Class::Led.path()];
+        self.devices = Vec::new();
+        let classes: Vec<PathBuf> = vec![Class::Backlight.into(), Class::Led.into()];
         for class in classes {
             match IO::scan(&class) {
                 Ok(device_ids) => {
                     for id in device_ids {
-                        let device = match Device::try_new(&class.join(id)) {
-                            Ok(v) => v,
+                        match Device::try_new(&class.join(id)) {
+                            Ok(device) => {
+                                self.devices.push(device);
+                            }
                             Err(_) => todo!("Error while reading device, skipping"),
-                        };
-                        self.devices.as_mut().unwrap().push(device);
+                        }
                     }
                 }
                 Err(_) => todo!("Log out error and continue"),
+            }
+        }
+    }
+
+    pub fn print_devices(&self) {
+        if self.devices.is_empty() {
+            println!("No devices found!");
+        } else {
+            println!("Found devices:");
+            for dev in &self.devices {
+                println!("\t{}", dev);
             }
         }
     }

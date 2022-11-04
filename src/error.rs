@@ -3,8 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::io::IOError;
-use crate::io::ParseError;
+type IOError = std::io::Error;
+type ParseError = std::num::ParseIntError;
 
 pub type Result<T> = std::result::Result<T, SlightError>;
 
@@ -12,7 +12,7 @@ pub type Result<T> = std::result::Result<T, SlightError>;
 pub enum SlightError {
     DeviceBroken(PathBuf),
     IO(IOError),
-    Parse,
+    Parse, // TODO: Say where error occured
 }
 
 impl From<&Path> for SlightError {

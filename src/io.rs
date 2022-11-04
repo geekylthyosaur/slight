@@ -2,9 +2,6 @@ use crate::error::Result;
 
 use std::path::Path;
 
-pub type IOError = std::io::Error;
-pub type ParseError = std::num::ParseIntError;
-
 pub struct IO;
 
 impl IO {

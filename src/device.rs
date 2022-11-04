@@ -1,11 +1,7 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
 
-use crate::{
-    class::Class,
-    error::{Result, SlightError},
-    io::IO,
-};
+use crate::{class::Class, error::SlightError, io::IO};
 
 const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
 const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
@@ -18,13 +14,15 @@ pub struct Device {
     max_brightness: usize,
 }
 
-impl Device {
-    pub fn try_new(path: &Path) -> Result<Self> {
+impl TryFrom<&Path> for Device {
+    type Error = SlightError;
+
+    fn try_from(p: &Path) -> std::result::Result<Self, Self::Error> {
         Ok(Device {
-            class: path.try_into()?,
-            id: path.try_into()?,
-            current_brightness: IO::read_number(&path.join(CURRENT_BRIGHTNESS_FILENAME))?,
-            max_brightness: IO::read_number(&path.join(MAX_BRIGHTNESS_FILENAME))?,
+            class: p.try_into()?,
+            id: p.try_into()?,
+            current_brightness: IO::read_number(&p.join(CURRENT_BRIGHTNESS_FILENAME))?,
+            max_brightness: IO::read_number(&p.join(MAX_BRIGHTNESS_FILENAME))?,
         })
     }
 }

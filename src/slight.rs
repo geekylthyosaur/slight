@@ -19,7 +19,7 @@ impl Slight {
             match IO::scan(&class) {
                 Ok(device_ids) => {
                     for id in device_ids {
-                        match Device::try_new(&class.join(id)) {
+                        match class.join(id).as_path().try_into() {
                             Ok(device) => {
                                 self.devices.push(device);
                             }

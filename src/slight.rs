@@ -17,6 +17,7 @@ impl Slight {
         let classes: Vec<PathBuf> = vec![Class::Backlight.into(), Class::Led.into()];
         for class in classes {
             match IO::scan(&class) {
+                // TODO: break this nested instructions
                 Ok(device_ids) => {
                     for id in device_ids {
                         match class.join(id).as_path().try_into() {

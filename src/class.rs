@@ -13,8 +13,8 @@ pub enum Class {
     Led,
 }
 
-impl From<Class> for PathBuf {
-    fn from(c: Class) -> Self {
+impl From<&Class> for PathBuf {
+    fn from(c: &Class) -> Self {
         let path = Path::new(PATH);
         match c {
             Class::Backlight => path.join(BACKLIGHT),

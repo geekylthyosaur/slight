@@ -21,13 +21,9 @@ pub struct Device {
 impl Device {
     pub fn set_brightness(&mut self, new: usize) -> Result<()> {
         if new <= self.max_brightness {
-            return match IO::write_number(&self.my_path().join(CURRENT_BRIGHTNESS_FILENAME), new) {
-                Ok(v) => {
-                    self.current_brightness = new;
-                    Ok(v)
-                }
-                e => e,
-            };
+            // TODO: calling my_path() every time is unnecessary
+            return IO::write_number(&self.my_path().join(CURRENT_BRIGHTNESS_FILENAME), new)
+                .and_then(|()| Ok(self.current_brightness = new));
         }
         Ok(())
     }

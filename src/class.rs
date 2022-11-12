@@ -1,3 +1,5 @@
+use strum::EnumIter;
+
 use crate::{error::SlightError, io::IO};
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -7,7 +9,7 @@ const PATH: &str = "/sys/class";
 const BACKLIGHT: &str = "backlight";
 const LED: &str = "leds";
 
-#[derive(Debug)]
+#[derive(Debug, EnumIter)]
 pub enum Class {
     Backlight,
     Led,

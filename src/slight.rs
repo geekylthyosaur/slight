@@ -1,6 +1,8 @@
+use strum::IntoEnumIterator;
+
 use std::path::PathBuf;
 
-use crate::{class::Class, device::Device, error::Result, io::IO};
+use crate::{class::Class, device::Device, io::IO};
 
 #[derive(Default)]
 pub struct Slight {
@@ -14,7 +16,7 @@ impl Slight {
 
     pub fn read_devices(&mut self) {
         self.devices = Vec::new();
-        let classes = vec![PathBuf::from(&Class::Backlight), PathBuf::from(&Class::Led)];
+        let classes = Class::iter().map(|c| PathBuf::from(&c)).collect::<Vec<_>>();
         for class in classes {
             match IO::scan(&class) {
                 // TODO: break this nested instructions

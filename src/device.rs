@@ -25,9 +25,9 @@ impl Device {
                 Ok(v) => {
                     self.current_brightness = new;
                     Ok(v)
-                },
+                }
                 e => e,
-            }
+            };
         }
         Ok(())
     }

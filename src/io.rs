@@ -6,20 +6,12 @@ pub struct IO;
 
 impl IO {
     pub fn scan(path: &Path) -> Result<Vec<String>> {
-        match path.read_dir() {
-            Ok(v) => {
-                // TODO: make this cleaner
-                Ok(v.filter(|v| v.is_ok())
-                    .map(|v| v.unwrap())
-                    // TODO: this check is unnececary but returns []
-                    // .filter(|v| v.file_type().unwrap().is_dir())
-                    .map(|v| v.file_name().into_string())
-                    .filter(|v| v.is_ok())
-                    .map(|v| v.unwrap())
-                    .collect::<Vec<_>>())
-            }
-            Err(_) => todo!(),
-        }
+        Ok(path.read_dir().map(|v| {
+            v.filter_map(|v| v.ok())
+                .map(|v| v.file_name().into_string())
+                .filter_map(|v| v.ok())
+                .collect()
+        })?)
     }
 
     pub fn read_number(path: &Path) -> Result<usize> {
@@ -33,11 +25,7 @@ impl IO {
     }
 
     pub fn dir(path: &Path) -> Option<&str> {
-        if path.is_dir() {
-            path.file_name()?.to_str()
-        } else {
-            None
-        }
+        path.is_dir().then_some(path.file_name()?.to_str()?)
     }
 
     pub fn parent_dir(path: &Path) -> Option<&str> {

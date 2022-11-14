@@ -2,7 +2,7 @@ use strum::IntoEnumIterator;
 
 use std::path::PathBuf;
 
-use crate::{class::Class, device::Device, io::IO};
+use crate::{class::Class, device::Device, error::Result, io::IO};
 
 #[derive(Default)]
 pub struct Slight {
@@ -16,23 +16,18 @@ impl Slight {
 
     pub fn read_devices(&mut self) {
         self.devices = Vec::new();
-        let classes = Class::iter().map(|c| PathBuf::from(&c)).collect::<Vec<_>>();
-        for class in classes {
-            match IO::scan(&class) {
-                // TODO: break this nested instructions
-                Ok(device_ids) => {
-                    for id in device_ids {
-                        match class.join(id).as_path().try_into() {
-                            Ok(device) => {
-                                self.devices.push(device);
-                            }
-                            Err(_) => todo!("Error while reading device, skipping"),
-                        }
-                    }
-                }
-                Err(_) => todo!("Log out error and continue"),
-            }
-        }
+        Class::iter().map(|c| PathBuf::from(&c)).for_each(|class| {
+            IO::scan(&class).map_or_else(
+                |_| todo!("Log out error"),
+                |ids| {
+                ids.iter().for_each(|id| {
+                    class.join(id).as_path().try_into().map_or_else(
+                        |_| todo!("Log out error"),
+                        |device| self.devices.push(device),
+                    )
+                })
+            });
+        })
     }
 
     pub fn print_devices(&self) {
@@ -44,5 +39,9 @@ impl Slight {
                 println!("\t{}", dev);
             }
         }
+    }
+
+    pub fn set_brightness(&self, device: &mut Device) -> Result<()> {
+        todo!()
     }
 }

@@ -2,7 +2,7 @@ use strum::IntoEnumIterator;
 
 use std::path::PathBuf;
 
-use crate::{class::Class, device::Device, error::Result, io::IO};
+use crate::{class::Class, device::{Device, Id}, error::Result, io::IO};
 
 #[derive(Default)]
 pub struct Slight {
@@ -41,7 +41,7 @@ impl Slight {
         }
     }
 
-    pub fn set_brightness(&self, device: &mut Device) -> Result<()> {
+    pub fn set_brightness(&mut self, id: Id) -> Result<()> {
         todo!()
     }
 }

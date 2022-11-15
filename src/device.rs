@@ -2,33 +2,21 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::{Path, PathBuf};
 
 use crate::{
+    brightness::Brightness,
     class::Class,
-    error::{Result, SlightError},
+    error::SlightError,
     io::IO,
 };
-
-const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
-const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
 #[derive(Debug)]
 pub struct Device {
     class: Class,
-    id: Id,
-    current_brightness: usize,
-    max_brightness: usize,
+    pub id: Id,
+    pub brightness: Brightness,
 }
 
 impl Device {
-    pub fn set_brightness(&mut self, new: usize) -> Result<()> {
-        if new <= self.max_brightness {
-            // TODO: calling my_path() every time is unnecessary
-            return IO::write_number(&self.my_path().join(CURRENT_BRIGHTNESS_FILENAME), new)
-                .and_then(|()| Ok(self.current_brightness = new));
-        }
-        Ok(())
-    }
-
-    fn my_path(&self) -> PathBuf {
+    pub fn my_path(&self) -> PathBuf {
         PathBuf::from(&self.class).join(&self.id.0)
     }
 }
@@ -40,8 +28,7 @@ impl TryFrom<&Path> for Device {
         Ok(Device {
             class: p.try_into()?,
             id: p.try_into()?,
-            current_brightness: IO::read_number(&p.join(CURRENT_BRIGHTNESS_FILENAME))?,
-            max_brightness: IO::read_number(&p.join(MAX_BRIGHTNESS_FILENAME))?,
+            brightness: p.try_into()?,
         })
     }
 }
@@ -50,13 +37,13 @@ impl Display for Device {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(
             f,
-            "{} '{}': {}/{}",
-            self.class, self.id, self.current_brightness, self.max_brightness
+            "{} '{}': {}",
+            self.class, self.id, self.brightness
         )
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Id(String);
 
 impl TryFrom<&Path> for Id {

@@ -1,11 +1,16 @@
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
 
-use crate::{error::{SlightError, Result}, io::IO};
+use crate::{
+    error::{Result, SlightError},
+    io::IO,
+};
 
 const PERCENT_MAX: usize = 100;
 const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
 const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
+#[derive(Debug)]
 pub struct Brightness {
     current: usize,
     max: usize,
@@ -13,10 +18,9 @@ pub struct Brightness {
 
 impl Brightness {
     pub fn set(&mut self, new: usize, path: &Path) -> Result<()> {
-        // TODO: Any ways to avoid passing path here?
         if new <= self.max {
             return IO::write_number(&path.join(CURRENT_BRIGHTNESS_FILENAME), new)
-                .and_then(|()| Ok(self.current = new));
+                .map(|_| self.current = new);
         } // TODO: else
         Ok(())
     }
@@ -40,3 +44,10 @@ impl TryFrom<&Path> for Brightness {
         })
     }
 }
+
+impl Display for Brightness {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}/{}", self.current, self.max)
+    }
+}
+

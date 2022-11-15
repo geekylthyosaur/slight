@@ -1,3 +1,4 @@
+mod brightness;
 mod class;
 mod device;
 mod error;

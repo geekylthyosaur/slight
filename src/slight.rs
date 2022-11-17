@@ -53,13 +53,14 @@ impl Slight {
                 .unwrap_or_else(|| todo!("Error! No specified device found!"))
         } else {
             self.default_device()
+                .unwrap_or_else(|| todo!("Error! No devices found!"))
         };
         let path = dev.my_path();
         dev.brightness.set(new, &path)
     }
 
-    fn default_device(&mut self) -> &mut Device {
-        &mut self.devices[0]
+    fn default_device(&mut self) -> Option<&mut Device> {
+        self.devices.iter_mut().filter(|d| d.class == Class::Backlight).nth(0)
     }
 
     fn find_device(&mut self, id: String) -> Option<&mut Device> {

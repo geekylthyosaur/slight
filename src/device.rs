@@ -5,7 +5,7 @@ use crate::{brightness::Brightness, class::Class, error::SlightError, io::IO};
 
 #[derive(Debug)]
 pub struct Device {
-    class: Class,
+    pub class: Class,
     pub id: Id,
     pub brightness: Brightness,
 }

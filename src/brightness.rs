@@ -50,4 +50,3 @@ impl Display for Brightness {
         write!(f, "{}/{}", self.current, self.max)
     }
 }
-

@@ -1,12 +1,7 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::{Path, PathBuf};
 
-use crate::{
-    brightness::Brightness,
-    class::Class,
-    error::SlightError,
-    io::IO,
-};
+use crate::{brightness::Brightness, class::Class, error::SlightError, io::IO};
 
 #[derive(Debug)]
 pub struct Device {
@@ -35,16 +30,18 @@ impl TryFrom<&Path> for Device {
 
 impl Display for Device {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(
-            f,
-            "{} '{}': {}",
-            self.class, self.id, self.brightness
-        )
+        write!(f, "{} '{}': {}", self.class, self.id, self.brightness)
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Id(String);
+
+impl PartialEq<String> for Id {
+    fn eq(&self, other: &String) -> bool {
+        self.0.eq(other)
+    }
+}
 
 impl TryFrom<&Path> for Id {
     type Error = SlightError;

@@ -3,9 +3,11 @@ use strum::IntoEnumIterator;
 use std::path::PathBuf;
 
 use crate::{
+    brightness::percent_to_value,
+    brightness::value_to_percent,
     class::Class,
-    device::{Device, Id},
-    error::Result,
+    device::Device,
+    error::{Result, SlightError},
     io::IO,
 };
 
@@ -48,15 +50,31 @@ impl Slight {
     }
 
     pub fn set_brightness(&mut self, new: usize, id: Option<String>) -> Result<()> {
-        let dev = if let Some(id) = id {
-            self.find_device(id)
-                .unwrap_or_else(|| todo!("Error! No specified device found!"))
-        } else {
-            self.default_device()
-                .unwrap_or_else(|| todo!("Error! No devices found!"))
-        };
+        let dev = self.get_device(id)?;
         let path = dev.my_path();
         dev.brightness.set(new, &path)
+    }
+
+    pub fn create_range(&mut self, id: Option<String>) -> Result<()> {
+        let dev = self.get_device(id)?;
+        let mut range = vec![];
+
+        for p in 0..=100 {
+            range.push(percent_to_value(p, dev.brightness.max(), 4.0));
+        }
+
+        range.iter().for_each(|&v| println!("{} {} ", v, value_to_percent(v, dev.brightness.max(), 2.0)));
+
+        todo!()
+    }
+
+    fn get_device(&mut self, id: Option<String>) -> Result<&mut Device> {
+        // TODO: to mut or not to mut
+        if let Some(id) = id {
+            self.find_device(id).ok_or(SlightError::Parse/*todo!("Error! No specified device found!")*/)
+        } else {
+            self.default_device().ok_or(SlightError::Parse/*todo!("Error! No suitable default device!")*/)
+        }
     }
 
     fn default_device(&mut self) -> Option<&mut Device> {

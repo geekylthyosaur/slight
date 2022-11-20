@@ -6,7 +6,7 @@ use crate::{
     io::IO,
 };
 
-const PERCENT_MAX: usize = 100;
+const PERCENT_MAX: f32 = 100.0;
 const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
 const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
@@ -18,6 +18,7 @@ pub struct Brightness {
 
 impl Brightness {
     pub fn set(&mut self, new: usize, path: &Path) -> Result<()> {
+        // TODO: if new == self.current
         if new <= self.max {
             return IO::write_number(&path.join(CURRENT_BRIGHTNESS_FILENAME), new)
                 .map(|_| self.current = new);
@@ -25,13 +26,25 @@ impl Brightness {
         Ok(())
     }
 
+    pub fn max(&self) -> usize {
+        self.max
+    }
+
     pub fn as_value(&self) -> usize {
         self.current
     }
 
-    pub fn as_percent(&self) -> usize {
-        self.current * PERCENT_MAX / self.max
+    pub fn as_percent(&self, exponent: f32) -> usize {
+        value_to_percent(self.current, self.max, exponent)
     }
+}
+
+pub fn value_to_percent(value: usize, max: usize, exponent: f32) -> usize {
+    (f32::powf(value as f32 / max as f32, 1.0 / exponent) * PERCENT_MAX) as usize
+}
+
+pub fn percent_to_value(percent: usize, max: usize, exponent: f32) -> usize {
+    (f32::powf(percent as f32 / PERCENT_MAX, exponent) * max as f32) as usize
 }
 
 impl TryFrom<&Path> for Brightness {

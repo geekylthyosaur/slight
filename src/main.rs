@@ -28,5 +28,5 @@ fn main() {
     let mut slight = Slight::new();
     slight.read_devices();
     slight.print_devices();
-    slight.set_brightness(args.new, args.id).unwrap();
+    slight.create_range(args.id).unwrap();
 }

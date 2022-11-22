@@ -55,30 +55,39 @@ impl Slight {
         dev.brightness.set(new, &path)
     }
 
-    pub fn create_range(&mut self, id: Option<String>) -> Result<()> {
-        let dev = self.get_device(id)?;
-        let mut range = vec![];
-
-        for p in 0..=100 {
-            range.push(percent_to_value(p, dev.brightness.max(), 4.0));
+    pub fn create_range(&self, curr: usize, new: usize, max: usize, exponent: f32) -> Vec<usize> {
+        if curr < new {
+            return (0..max)
+                .map(|v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
+                .filter(|&v| v > curr && v <= new)
+                .collect();
+        } else {
+            return (0..max)
+                .map(|v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
+                .filter(|&v| v < curr && v >= new)
+                .rev()
+                .collect();
         }
-
-        range.iter().for_each(|&v| println!("{} {} ", v, value_to_percent(v, dev.brightness.max(), 2.0)));
-
-        todo!()
     }
 
     fn get_device(&mut self, id: Option<String>) -> Result<&mut Device> {
         // TODO: to mut or not to mut
         if let Some(id) = id {
-            self.find_device(id).ok_or(SlightError::Parse/*todo!("Error! No specified device found!")*/)
+            self.find_device(id).ok_or(
+                SlightError::Parse, /*todo!("Error! No specified device found!")*/
+            )
         } else {
-            self.default_device().ok_or(SlightError::Parse/*todo!("Error! No suitable default device!")*/)
+            self.default_device().ok_or(
+                SlightError::Parse, /*todo!("Error! No suitable default device!")*/
+            )
         }
     }
 
     fn default_device(&mut self) -> Option<&mut Device> {
-        self.devices.iter_mut().filter(|d| d.class == Class::Backlight).nth(0)
+        self.devices
+            .iter_mut()
+            .filter(|d| d.class == Class::Backlight)
+            .nth(0)
     }
 
     fn find_device(&mut self, id: String) -> Option<&mut Device> {

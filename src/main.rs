@@ -28,5 +28,5 @@ fn main() {
     let mut slight = Slight::new();
     slight.read_devices();
     slight.print_devices();
-    slight.create_range(args.id).unwrap();
+    slight.create_range(100, 20, 255, 4.0);
 }

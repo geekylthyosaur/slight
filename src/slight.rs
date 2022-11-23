@@ -55,18 +55,16 @@ impl Slight {
         dev.brightness.set(new, &path)
     }
 
-    pub fn create_range(&self, curr: usize, new: usize, max: usize, exponent: f32) -> Vec<usize> {
+    pub fn create_range(&self, curr: usize, new: usize, max: usize, exponent: f32) -> Box<dyn Iterator<Item = usize>> {
         if curr < new {
-            return (0..max)
-                .map(|v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
-                .filter(|&v| v > curr && v <= new)
-                .collect();
+            Box::new((0..max)
+                .map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
+                .filter(move |&v| v > curr && v <= new))
         } else {
-            return (0..max)
-                .map(|v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
-                .filter(|&v| v < curr && v >= new)
-                .rev()
-                .collect();
+            Box::new((0..max)
+                .map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
+                .filter(move |&v| v < curr && v >= new)
+                .rev())
         }
     }
 

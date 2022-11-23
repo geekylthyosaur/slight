@@ -28,5 +28,8 @@ fn main() {
     let mut slight = Slight::new();
     slight.read_devices();
     slight.print_devices();
-    slight.create_range(100, 20, 255, 4.0);
+    let i = slight.create_range(100, 20, 255, 4.0);
+    for i in i {
+        println!("{}", i);
+    }
 }

@@ -50,21 +50,30 @@ impl Slight {
     }
 
     pub fn set_brightness(&mut self, new: usize, id: Option<String>) -> Result<()> {
+        // TODO: borrow checker is angry
         let dev = self.get_device(id)?;
+        let curr = dev.brightness.as_value();
+        let max = dev.brightness.max();
         let path = dev.my_path();
-        dev.brightness.set(new, &path)
+        for v in self.create_range(curr, new, max, 4.0) {
+            dev.brightness.set(new, &path)?
+        }
+        Ok(())
     }
 
-    pub fn create_range(&self, curr: usize, new: usize, max: usize, exponent: f32) -> Box<dyn Iterator<Item = usize>> {
+    pub fn create_range(
+        &self,
+        curr: usize,
+        new: usize,
+        max: usize,
+        exponent: f32,
+    ) -> Box<dyn Iterator<Item = usize>> {
+        let range =
+            (0..max).map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize);
         if curr < new {
-            Box::new((0..max)
-                .map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
-                .filter(move |&v| v > curr && v <= new))
+            Box::new(range.filter(move |&v| v > curr && v <= new))
         } else {
-            Box::new((0..max)
-                .map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize)
-                .filter(move |&v| v < curr && v >= new)
-                .rev())
+            Box::new(range.filter(move |&v| v < curr && v >= new).rev())
         }
     }
 

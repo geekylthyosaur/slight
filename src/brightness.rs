@@ -18,8 +18,7 @@ pub struct Brightness {
 
 impl Brightness {
     pub fn set(&mut self, new: usize, path: &Path) -> Result<()> {
-        // TODO: if new == self.current
-        if new <= self.max {
+        if new != self.current && new <= self.max {
             return IO::write_number(&path.join(CURRENT_BRIGHTNESS_FILENAME), new)
                 .map(|_| self.current = new);
         } // TODO: else

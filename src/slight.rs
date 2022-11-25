@@ -1,10 +1,9 @@
 use strum::IntoEnumIterator;
 
+use std::cmp::Ordering;
 use std::path::PathBuf;
 
 use crate::{
-    brightness::percent_to_value,
-    brightness::value_to_percent,
     class::Class,
     device::Device,
     error::{Result, SlightError},
@@ -68,21 +67,24 @@ impl Slight {
         new: usize,
         max: usize,
         exponent: f32,
-    ) -> Box<dyn Iterator<Item = usize>> {
-        // TODO: dedup
+    ) -> impl Iterator<Item = usize> {
         let range =
             (0..max).map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize);
-        if curr < new {
-            Box::new(range.filter(move |&v| v > curr && v <= new))
-        } else {
-            Box::new(range.filter(move |&v| v < curr && v >= new).rev())
-        }
+        let mut range = match curr.cmp(&new) {
+            Ordering::Less => range
+                .filter(move |&v| v > curr && v <= new)
+                .collect::<Vec<usize>>(),
+            Ordering::Greater => range
+                .filter(move |&v| v < curr && v >= new)
+                .rev()
+                .collect::<Vec<usize>>(),
+            Ordering::Equal => vec![],
+        };
+        range.dedup();
+        range.into_iter()
     }
 
-    fn set_brightness_range(
-        range: Box<dyn Iterator<Item = usize>>,
-        device: &mut Device,
-    ) -> Result<()> {
+    fn set_brightness_range(range: impl Iterator<Item = usize>, device: &mut Device) -> Result<()> {
         let path = device.my_path();
         for v in range {
             device.brightness.set(v, &path)?;

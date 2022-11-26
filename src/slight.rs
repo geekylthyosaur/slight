@@ -69,7 +69,7 @@ impl Slight {
         exponent: f32,
     ) -> impl Iterator<Item = usize> {
         let range =
-            (0..max).map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize);
+            (0..=max).map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize);
         let mut range = match curr.cmp(&new) {
             Ordering::Less => range
                 .filter(move |&v| v > curr && v <= new)

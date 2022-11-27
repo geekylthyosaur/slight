@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 use std::path::PathBuf;
 
 use crate::{
+    Args,
     class::Class,
     device::Device,
     error::{Result, SlightError},
@@ -16,7 +17,7 @@ const SLEEP_DURATION: f32 = 1.0 / 60.0;
 #[derive(Default)]
 pub struct Slight {
     devices: Vec<Device>,
-    exponent: Option<f32>,
+    exponent: f32,
 }
 
 impl Slight {
@@ -53,7 +54,7 @@ impl Slight {
     }
 
     pub fn set_brightness(&mut self, new: usize, id: Option<String>) -> Result<()> {
-        let exponent = self.exponent.unwrap_or(EXPONENT_DEFAULT);
+        let exponent = self.exponent;
         let dev = self.get_device(id)?;
         let curr = dev.brightness.as_value();
         let max = dev.brightness.max();
@@ -114,5 +115,16 @@ impl Slight {
 
     fn find_device(&mut self, id: String) -> Option<&mut Device> {
         self.devices.iter_mut().find(|d| d.id == id)
+    }
+}
+
+impl TryFrom<&Args> for Slight {
+    type Error = SlightError;
+
+    fn try_from(a: &Args) -> std::result::Result<Self, Self::Error> {
+        Ok(Self {
+            exponent: a.exponent.unwrap_or(EXPONENT_DEFAULT),
+            ..Self::default()
+        })
     }
 }

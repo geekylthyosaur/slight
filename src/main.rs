@@ -20,12 +20,18 @@ pub struct Args {
     /// New brightness value
     #[clap(short, long)]
     new: usize,
+
+    /// Exponent
+    #[clap(short, long)]
+    exponent: Option<f32>,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let mut slight = Slight::new();
+    let mut slight = Slight::try_from(&args).unwrap_or_else(|_| {
+        todo!("Error!")
+    });
     slight.read_devices();
     slight.print_devices();
     slight.set_brightness(args.new, args.id).unwrap();

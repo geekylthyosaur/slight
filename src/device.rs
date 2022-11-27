@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use crate::{brightness::Brightness, class::Class, error::SlightError, io::IO};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Device {
     pub class: Class,
     pub id: Id,
@@ -34,11 +34,11 @@ impl Display for Device {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Id(String);
 
-impl PartialEq<String> for Id {
-    fn eq(&self, other: &String) -> bool {
+impl PartialEq<&str> for Id {
+    fn eq(&self, other: &&str) -> bool {
         self.0.eq(other)
     }
 }

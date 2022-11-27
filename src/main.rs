@@ -18,8 +18,16 @@ pub struct Args {
     id: Option<String>,
 
     /// New brightness value
+    #[clap(short, long, conflicts_with("percent"))]
+    value: Option<usize>,
+
+    /// New brightness percent delta
     #[clap(short, long)]
-    new: usize,
+    percent: Option<f32>,
+
+    /// Print all available devices and exit
+    #[clap(short, long)]
+    list: bool,
 
     /// Exponent
     #[clap(short, long)]
@@ -29,10 +37,12 @@ pub struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut slight = Slight::try_from(&args).unwrap_or_else(|_| {
-        todo!("Error!")
-    });
-    slight.read_devices();
-    slight.print_devices();
-    slight.set_brightness(args.new, args.id).unwrap();
+    if args.list {
+        Slight::print_devices();
+        return;
+    }
+
+    let mut slight = Slight::try_from(&args).unwrap_or_else(|_| todo!("Error!"));
+    // TODO: pass value or percent
+    slight.set_brightness(args.value.unwrap()).unwrap();
 }

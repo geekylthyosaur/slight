@@ -10,7 +10,7 @@ const PERCENT_MAX: f32 = 100.0;
 const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
 const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Brightness {
     current: usize,
     max: usize,

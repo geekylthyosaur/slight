@@ -22,7 +22,7 @@ pub struct Args {
     value: Option<usize>,
 
     /// New brightness percent delta
-    #[clap(short, long)]
+    #[clap(short, long, allow_hyphen_values(true))]
     percent: Option<f32>,
 
     /// Print all available devices and exit
@@ -43,6 +43,5 @@ fn main() {
     }
 
     let mut slight = Slight::try_from(&args).unwrap_or_else(|_| todo!("Error!"));
-    // TODO: pass value or percent
-    slight.set_brightness(args.value.unwrap()).unwrap();
+    slight.set_brightness().unwrap();
 }

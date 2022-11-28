@@ -6,7 +6,6 @@ use crate::{
     io::IO,
 };
 
-const PERCENT_MAX: f32 = 100.0;
 const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
 const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
@@ -33,17 +32,9 @@ impl Brightness {
         self.current
     }
 
-    pub fn as_percent(&self, exponent: f32) -> usize {
-        value_to_percent(self.current, self.max, exponent)
+    pub fn as_percent(&self) -> usize {
+        ((self.current as f32 / self.max as f32) * 100.0) as usize
     }
-}
-
-pub fn value_to_percent(value: usize, max: usize, exponent: f32) -> usize {
-    (f32::powf(value as f32 / max as f32, 1.0 / exponent) * PERCENT_MAX) as usize
-}
-
-pub fn percent_to_value(percent: usize, max: usize, exponent: f32) -> usize {
-    (f32::powf(percent as f32 / PERCENT_MAX, exponent) * max as f32) as usize
 }
 
 impl TryFrom<&Path> for Brightness {

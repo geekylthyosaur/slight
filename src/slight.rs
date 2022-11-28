@@ -18,9 +18,18 @@ const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 60.0;
 pub struct Slight {
     device: Device,
     exponent: f32,
+    new_value: usize,
 }
 
 impl Slight {
+    pub fn set_brightness(&mut self) -> Result<()> {
+        let curr = self.device.brightness.as_value();
+        let max = self.device.brightness.max();
+        let range = Self::create_range(curr, self.new_value, max, self.exponent);
+        Self::set_brightness_range(range, &mut self.device)?;
+        Ok(())
+    }
+
     fn scan_devices() -> Vec<Device> {
         let mut devices = Vec::new();
         Class::iter().map(|c| PathBuf::from(&c)).for_each(|class| {
@@ -50,14 +59,6 @@ impl Slight {
                 println!("\t{}", dev);
             }
         }
-    }
-
-    pub fn set_brightness(&mut self, new: usize) -> Result<()> {
-        let curr = self.device.brightness.as_value();
-        let max = self.device.brightness.max();
-        let range = Self::create_range(curr, new, max, self.exponent);
-        Self::set_brightness_range(range, &mut self.device)?;
-        Ok(())
     }
 
     fn create_range(
@@ -91,7 +92,7 @@ impl Slight {
         Ok(())
     }
 
-    fn select_device<'a>(devices: &'a Vec<Device>, id: Option<&'a str>) -> Result<&'a Device> {
+    fn select_device<'a>(devices: &'a [Device], id: Option<&'a str>) -> Result<&'a Device> {
         if let Some(id) = id {
             Self::find_device(devices, id).ok_or(
                 SlightError::Parse, /*todo!("Error! No specified device found!")*/
@@ -103,11 +104,11 @@ impl Slight {
         }
     }
 
-    fn find_device<'a>(devices: &'a Vec<Device>, id: &'a str) -> Option<&'a Device> {
+    fn find_device<'a>(devices: &'a [Device], id: &'a str) -> Option<&'a Device> {
         devices.iter().find(|d| d.id == id)
     }
 
-    fn default_device(devices: &Vec<Device>) -> Option<&Device> {
+    fn default_device(devices: &[Device]) -> Option<&Device> {
         devices.iter().find(|d| d.class == Class::Backlight)
     }
 }
@@ -117,10 +118,19 @@ impl TryFrom<&Args> for Slight {
 
     fn try_from(a: &Args) -> std::result::Result<Self, Self::Error> {
         let devices = Self::scan_devices();
+        // TODO: any reasons to pass a reference?
         let device = Self::select_device(&devices, a.id.as_deref())?;
+        let exponent = a.exponent.unwrap_or(EXPONENT_DEFAULT);
+        let new_value = if let Some(percent) = a.percent {
+            let percent = (device.brightness.as_percent() as f32 + percent) as usize;
+            ((percent as f32 / 100.0) * device.brightness.max() as f32) as usize
+        } else {
+            a.value.unwrap()
+        };
         Ok(Self {
             device: device.clone(),
-            exponent: a.exponent.unwrap_or(EXPONENT_DEFAULT),
+            exponent,
+            new_value,
         })
     }
 }

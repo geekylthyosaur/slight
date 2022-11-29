@@ -19,6 +19,7 @@ pub struct Slight {
     device: Device,
     exponent: f32,
     new_value: usize,
+    stdout: bool,
 }
 
 impl Slight {
@@ -26,6 +27,10 @@ impl Slight {
         let curr = self.device.brightness.as_value();
         let max = self.device.brightness.max();
         let range = Self::create_range(curr, self.new_value, max, self.exponent);
+        if self.stdout {
+            println!("{}", range.map(|v| v.to_string()).collect::<Vec<_>>().join("\n"));
+            return Ok(());
+        }
         Self::set_brightness_range(range, &mut self.device)?;
         Ok(())
     }
@@ -131,6 +136,7 @@ impl TryFrom<&Args> for Slight {
             device: device.clone(),
             exponent,
             new_value,
+            stdout: a.stdout,
         })
     }
 }

@@ -32,6 +32,10 @@ pub struct Args {
     /// Exponent
     #[clap(short, long)]
     exponent: Option<f32>,
+
+    /// Write to stdout instead of sysfs
+    #[clap(short, long)]
+    stdout: bool,
 }
 
 fn main() {

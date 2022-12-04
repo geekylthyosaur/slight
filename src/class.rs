@@ -9,7 +9,7 @@ const PATH: &str = "/sys/class";
 const BACKLIGHT: &str = "backlight";
 const LED: &str = "leds";
 
-#[derive(Debug, Clone, PartialEq, EnumIter)]
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter)]
 pub enum Class {
     Backlight,
     Led,

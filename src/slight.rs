@@ -12,6 +12,7 @@ use crate::{
 };
 
 const EXPONENT_DEFAULT: f32 = 4.0;
+const NO_EXPONENT_DEFAULT: f32 = 1.0;
 // TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
 const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
@@ -35,7 +36,7 @@ impl Slight {
             );
             return Ok(());
         }
-        Self::set_brightness_range(range, &mut self.device)?;
+        self.set_brightness_range(range)?;
         Ok(())
     }
 
@@ -92,30 +93,30 @@ impl Slight {
                 Ordering::Equal => vec![],
             };
             range.dedup();
-            return range.into_iter();
+            range.into_iter()
         } else if let Some(percent) = percent {
             let mut range = match percent.is_sign_positive() {
                 true => range
                     .filter(move |&v| v > curr)
-                    .take(percent as usize)
+                    .take((percent * exponent) as usize)
                     .collect::<Vec<usize>>(),
                 false => range
                     .filter(move |&v| v < curr)
                     .rev()
-                    .take(percent.copysign(1.0) as usize)
+                    .take((percent.copysign(1.0) * exponent) as usize)
                     .collect::<Vec<usize>>(),
             };
             range.dedup();
-            return range.into_iter();
+            range.into_iter()
         } else {
             unreachable!()
         }
     }
 
-    fn set_brightness_range(range: impl Iterator<Item = usize>, device: &mut Device) -> Result<()> {
-        let path = device.my_path();
+    fn set_brightness_range(&mut self, range: impl Iterator<Item = usize>) -> Result<()> {
+        let path = self.device.my_path();
         for v in range {
-            device.brightness.set(v, &path)?;
+            self.device.brightness.set(v, &path)?;
             std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
         }
         Ok(())
@@ -149,7 +150,10 @@ impl TryFrom<&Args> for Slight {
         let devices = Self::scan_devices();
         // TODO: any reasons to pass a reference?
         let device = Self::select_device(&devices, a.id.as_deref())?;
-        let exponent = a.exponent.unwrap_or(EXPONENT_DEFAULT);
+        let exponent = a
+            .exponent
+            .unwrap_or(Some(NO_EXPONENT_DEFAULT))
+            .unwrap_or(EXPONENT_DEFAULT);
         Ok(Self {
             device: device.clone(),
             exponent,

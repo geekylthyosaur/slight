@@ -30,11 +30,7 @@ impl Slight {
         let max = self.device.brightness.max();
         let range = Self::create_range(curr, self.new_value, self.percent, max, self.exponent);
         if self.stdout {
-            println!(
-                "{}",
-                range.map(|v| v.to_string()).collect::<Vec<_>>().join("\n")
-            );
-            return Ok(());
+            return Ok(Self::print_range(range))
         }
         self.set_brightness_range(range)?;
         Ok(())
@@ -71,6 +67,13 @@ impl Slight {
         }
     }
 
+    fn print_range(r: impl Iterator<Item = usize>) {
+        println!(
+            "{}",
+            r.map(|v| v.to_string()).collect::<Vec<_>>().join("\n")
+        );
+    }
+
     fn create_range(
         curr: usize,
         new: Option<usize>,
@@ -81,35 +84,37 @@ impl Slight {
         // TODO
         let range =
             (0..=max).map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize);
-        if let Some(new) = new {
-            let mut range = match curr.cmp(&new) {
-                Ordering::Less => range
-                    .filter(move |&v| v > curr && v <= new)
-                    .collect::<Vec<usize>>(),
-                Ordering::Greater => range
-                    .filter(move |&v| v < curr && v >= new)
-                    .rev()
-                    .collect::<Vec<usize>>(),
-                Ordering::Equal => vec![],
-            };
-            range.dedup();
-            range.into_iter()
-        } else if let Some(percent) = percent {
-            let mut range = match percent.is_sign_positive() {
-                true => range
-                    .filter(move |&v| v > curr)
-                    .take((percent * exponent) as usize)
-                    .collect::<Vec<usize>>(),
-                false => range
-                    .filter(move |&v| v < curr)
-                    .rev()
-                    .take((percent.copysign(1.0) * exponent) as usize)
-                    .collect::<Vec<usize>>(),
-            };
-            range.dedup();
-            range.into_iter()
-        } else {
-            unreachable!()
+        match (new, percent) {
+            (Some(n), None) => {
+                let mut range = match curr.cmp(&n) {
+                    Ordering::Less => range
+                        .filter(move |&v| v > curr && v <= n)
+                        .collect::<Vec<usize>>(),
+                    Ordering::Greater => range
+                        .filter(move |&v| v < curr && v >= n)
+                        .rev()
+                        .collect::<Vec<usize>>(),
+                    Ordering::Equal => vec![],
+                };
+                range.dedup();
+                range.into_iter()
+            },
+            (None, Some(p)) => {
+                let mut range = match p.is_sign_positive() {
+                    true => range
+                        .filter(move |&v| v > curr)
+                        .take((p * exponent) as usize)
+                        .collect::<Vec<usize>>(),
+                    false => range
+                        .filter(move |&v| v < curr)
+                        .rev()
+                        .take((p.copysign(1.0) * exponent) as usize)
+                        .collect::<Vec<usize>>(),
+                };
+                range.dedup();
+                range.into_iter()
+            },
+            (_, _) => unreachable!(),
         }
     }
 
@@ -124,12 +129,12 @@ impl Slight {
 
     fn select_device<'a>(devices: &'a [Device], id: Option<&'a str>) -> Result<&'a Device> {
         if let Some(id) = id {
-            Self::find_device(devices, id).ok_or(
-                SlightError::Parse, /*todo!("Error! No specified device found!")*/
+            Self::find_device(devices, id).ok_or_else(||
+                todo!("Error! No specified device found!")
             )
         } else {
-            Self::default_device(devices).ok_or(
-                SlightError::Parse, /*todo!("Error! No suitable default device!")*/
+            Self::default_device(devices).ok_or_else(||
+                todo!("Error! No suitable default device!")
             )
         }
     }

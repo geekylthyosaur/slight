@@ -2,6 +2,7 @@ mod brightness;
 mod class;
 mod device;
 mod error;
+mod range;
 mod io;
 mod slight;
 
@@ -17,7 +18,7 @@ pub struct Args {
     #[clap(short, long)]
     id: Option<String>,
 
-    /// New brightness value
+    /// Set exact brightness value
     #[clap(short, long, conflicts_with("percent"))]
     value: Option<usize>,
 

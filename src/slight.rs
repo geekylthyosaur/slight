@@ -8,6 +8,7 @@ use crate::{
     device::Device,
     error::{Result, SlightError},
     io::IO,
+    range::Range,
     Args,
 };
 
@@ -82,37 +83,12 @@ impl Slight {
         exponent: f32,
     ) -> impl Iterator<Item = usize> {
         // TODO
-        let range =
-            (0..=max).map(move |v| ((v as f32 / max as f32).powf(exponent) * max as f32) as usize);
         match (new, percent) {
             (Some(n), None) => {
-                let mut range = match curr.cmp(&n) {
-                    Ordering::Less => range
-                        .filter(move |&v| v > curr && v <= n)
-                        .collect::<Vec<usize>>(),
-                    Ordering::Greater => range
-                        .filter(move |&v| v < curr && v >= n)
-                        .rev()
-                        .collect::<Vec<usize>>(),
-                    Ordering::Equal => vec![],
-                };
-                range.dedup();
-                range.into_iter()
+                Range::new(curr, max).to_value(n)
             },
             (None, Some(p)) => {
-                let mut range = match p.is_sign_positive() {
-                    true => range
-                        .filter(move |&v| v > curr)
-                        .take((p * exponent) as usize)
-                        .collect::<Vec<usize>>(),
-                    false => range
-                        .filter(move |&v| v < curr)
-                        .rev()
-                        .take((p.copysign(1.0) * exponent) as usize)
-                        .collect::<Vec<usize>>(),
-                };
-                range.dedup();
-                range.into_iter()
+                Range::new(curr, max).by_percent_exp(p, exponent)
             },
             (_, _) => unreachable!(),
         }

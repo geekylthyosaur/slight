@@ -5,6 +5,7 @@ mod error;
 mod io;
 mod range;
 mod slight;
+mod value;
 
 use slight::Slight;
 
@@ -18,13 +19,9 @@ pub struct Args {
     #[clap(short, long)]
     id: Option<String>,
 
-    /// Set exact brightness value
-    #[clap(short, long, conflicts_with("percent"))]
-    value: Option<usize>,
-
-    /// New brightness percent delta
-    #[clap(short, long, allow_hyphen_values(true))]
-    percent: Option<f32>,
+    /// to_value: 10, by_value: +-10, by_percent: +-10.0%
+    #[clap()]
+    value: String,
 
     /// Print all available devices and exit
     #[clap(short, long)]

@@ -15,7 +15,7 @@ pub enum Sign {
 
 impl TryFrom<String> for Input {
     type Error = ();
-
+    // TODO
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let mut chars = s.chars().peekable();
         if let Some(c) = chars.next_if(|&c| c == '-' || c == '+') {
@@ -28,7 +28,7 @@ impl TryFrom<String> for Input {
 
 impl TryFrom<String> for Value {
     type Error = ();
-
+    // TODO
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let chars = s.split('%').collect::<Vec<_>>();
         todo!()
@@ -37,7 +37,7 @@ impl TryFrom<String> for Value {
 
 impl TryFrom<char> for Sign {
     type Error = ();
-
+    // TODO
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
             '-' => Ok(Self::Minus),

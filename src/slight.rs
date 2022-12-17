@@ -8,6 +8,7 @@ use crate::{
     error::{Result, SlightError},
     io::IO,
     range::Range,
+    value::{Input, Value, Sign},
     Args,
 };
 
@@ -19,8 +20,7 @@ const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 pub struct Slight {
     device: Device,
     exponent: f32,
-    new_value: Option<usize>,
-    percent: Option<f32>,
+    input: Input,
     stdout: bool,
 }
 
@@ -28,7 +28,7 @@ impl Slight {
     pub fn set_brightness(&mut self) -> Result<()> {
         let curr = self.device.brightness.as_value();
         let max = self.device.brightness.max();
-        let range = Self::create_range(curr, self.new_value, self.percent, max, self.exponent);
+        let range = Self::create_range(curr, self.input, max, self.exponent);
         if self.stdout {
             return Ok(Self::print_range(range));
         }
@@ -76,18 +76,18 @@ impl Slight {
 
     fn create_range(
         curr: usize,
-        new: Option<usize>,
-        percent: Option<f32>,
+        input: Input,
         max: usize,
         exponent: f32,
     ) -> impl Iterator<Item = usize> {
         // TODO let r = Range::new().by().percent().exp()
         // ...
         // r.get()
-        match (new, percent) {
-            (Some(n), None) => Range::new(curr, max).to_value(n),
-            (None, Some(p)) => Range::new(curr, max).by_percent_exp(p, exponent),
-            (_, _) => unreachable!(),
+        match input {
+            Input::To(Value::Percent(p)) => todo!(),
+            Input::To(Value::Absolute(v)) => todo!(),
+            Input::By(s, Value::Absolute(v)) => todo!(),
+            Input::By(s, Value::Percent(p)) => todo!(),
         }
     }
 

@@ -2,8 +2,8 @@ mod brightness;
 mod class;
 mod device;
 mod error;
-mod range;
 mod io;
+mod range;
 mod slight;
 
 use slight::Slight;
@@ -28,7 +28,7 @@ pub struct Args {
 
     /// Print all available devices and exit
     #[clap(short, long)]
-    list: bool,
+    list: Option<Option<String>>,
 
     /// Exponent
     #[clap(short, long)]
@@ -42,8 +42,12 @@ pub struct Args {
 fn main() {
     let args = Args::parse();
 
-    if args.list {
-        Slight::print_devices();
+    if let Some(list) = args.list {
+        if let Some(_id) = list {
+            // TODO: print single device
+        } else {
+            Slight::print_devices();
+        }
         return;
     }
 

@@ -1,6 +1,5 @@
 use strum::IntoEnumIterator;
 
-use std::cmp::Ordering;
 use std::path::PathBuf;
 
 use crate::{
@@ -31,7 +30,7 @@ impl Slight {
         let max = self.device.brightness.max();
         let range = Self::create_range(curr, self.new_value, self.percent, max, self.exponent);
         if self.stdout {
-            return Ok(Self::print_range(range))
+            return Ok(Self::print_range(range));
         }
         self.set_brightness_range(range)?;
         Ok(())
@@ -82,14 +81,12 @@ impl Slight {
         max: usize,
         exponent: f32,
     ) -> impl Iterator<Item = usize> {
-        // TODO
+        // TODO let r = Range::new().by().percent().exp()
+        // ...
+        // r.get()
         match (new, percent) {
-            (Some(n), None) => {
-                Range::new(curr, max).to_value(n)
-            },
-            (None, Some(p)) => {
-                Range::new(curr, max).by_percent_exp(p, exponent)
-            },
+            (Some(n), None) => Range::new(curr, max).to_value(n),
+            (None, Some(p)) => Range::new(curr, max).by_percent_exp(p, exponent),
             (_, _) => unreachable!(),
         }
     }
@@ -105,13 +102,9 @@ impl Slight {
 
     fn select_device<'a>(devices: &'a [Device], id: Option<&'a str>) -> Result<&'a Device> {
         if let Some(id) = id {
-            Self::find_device(devices, id).ok_or_else(||
-                todo!("Error! No specified device found!")
-            )
+            Self::find_device(devices, id).ok_or_else(|| todo!("Error! No specified device found!"))
         } else {
-            Self::default_device(devices).ok_or_else(||
-                todo!("Error! No suitable default device!")
-            )
+            Self::default_device(devices).ok_or_else(|| todo!("Error! No suitable default device!"))
         }
     }
 

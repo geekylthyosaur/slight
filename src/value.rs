@@ -1,5 +1,3 @@
-use std::ops::Mul;
-
 pub enum Input {
     To(Value),
     By(Sign, Value),
@@ -15,7 +13,7 @@ pub enum Sign {
     Minus,
 }
 
-impl Mul<f32> for &Sign {
+impl std::ops::Mul<f32> for &Sign {
     type Output = f32;
 
     fn mul(self, f: f32) -> f32 {

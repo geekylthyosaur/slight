@@ -42,13 +42,13 @@ impl Slight {
             IO::scan(&class).map_or_else(
                 |_| todo!("Log out error"),
                 |ids| {
-                    ids.iter().for_each(|id| {
+                    for id in ids {
                         class
                             .join(id)
                             .as_path()
                             .try_into()
-                            .map_or_else(|_| todo!("Log out error"), |device| devices.push(device))
-                    });
+                            .map_or_else(|_| todo!("Log out error"), |device| devices.push(device));
+                    };
                 },
             );
         });

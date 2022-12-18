@@ -88,18 +88,19 @@ impl RangeBuilder for Exponential {
                 todo!()
             }
             Value::Relative(v, Step::By(Range { curr, max })) => {
-                let r: Box<dyn Iterator<Item = usize>> = match v.is_sign_positive() {
-                    true => Box::new(
+                let r: Box<dyn Iterator<Item = usize>> = if v.is_sign_positive() {
+                    Box::new(
                         (0..=max)
                             .filter(move |&v| v > curr)
                             .take((v * self.exponent) as usize),
-                    ),
-                    false => Box::new(
+                    )
+                } else {
+                    Box::new(
                         (0..=max)
                             .filter(move |&v| v < curr)
                             .rev()
                             .take((v.copysign(1.0) * self.exponent) as usize),
-                    ),
+                    )
                 };
                 r
             }

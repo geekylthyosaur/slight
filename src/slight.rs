@@ -13,13 +13,12 @@ use crate::{
 };
 
 const EXPONENT_DEFAULT: f32 = 4.0;
-const NO_EXPONENT_DEFAULT: f32 = 1.0;
 // TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
 const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
 pub struct Slight {
     device: Device,
-    exponent: f32,
+    exponent: Option<f32>,
     input: Input,
     stdout: bool,
 }
@@ -82,20 +81,23 @@ impl Slight {
         curr: usize,
         input: &Input,
         max: usize,
-        exponent: f32,
+        exponent: Option<f32>,
     ) -> Box<dyn RangeBuilder> {
         // TODO: Range::try_from(input)?
-        Box::new(
-            match &input {
-                Input::To(Value::Relative(p)) => Range::new(curr, max).to().relative(*p),
-                Input::To(Value::Absolute(v)) => Range::new(curr, max).to().absolute(*v as isize),
-                Input::By(s, Value::Absolute(v)) => Range::new(curr, max)
-                    .by()
-                    .absolute((s * *v as f32) as isize),
-                Input::By(s, Value::Relative(p)) => Range::new(curr, max).by().relative(s * *p),
-            }
-            .exp(exponent),
-        )
+        let r = match &input {
+            Input::To(Value::Relative(p)) => Range::new(curr, max).to().relative(*p),
+            Input::To(Value::Absolute(v)) => Range::new(curr, max).to().absolute(*v as isize),
+            Input::By(s, Value::Absolute(v)) => Range::new(curr, max)
+                .by()
+                .absolute((s * *v as f32) as isize),
+            Input::By(s, Value::Relative(p)) => Range::new(curr, max).by().relative(s * *p),
+        };
+
+        if let Some(e) = exponent {
+            Box::new(r.exp(e))
+        } else {
+            Box::new(r)
+        }
     }
 
     fn set_brightness_range(&mut self, range: Box<dyn RangeBuilder>) -> Result<()> {
@@ -131,10 +133,11 @@ impl TryFrom<&Args> for Slight {
         let devices = Self::scan_devices();
         // TODO: any reasons to pass a reference?
         let device = Self::select_device(&devices, a.id.as_deref())?;
-        let exponent = a
-            .exponent
-            .unwrap_or(Some(NO_EXPONENT_DEFAULT))
-            .unwrap_or(EXPONENT_DEFAULT);
+        let exponent = match a.exponent {
+            None => None,
+            Some(None) => Some(EXPONENT_DEFAULT),
+            Some(Some(v)) => Some(v),
+        };
         Ok(Self {
             device: device.clone(),
             exponent,

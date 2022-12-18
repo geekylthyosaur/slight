@@ -83,6 +83,7 @@ impl Slight {
         max: usize,
         exponent: f32,
     ) -> Box<dyn RangeBuilder> {
+        // TODO: Range::try_from(input)?
         Box::new(
             match &input {
                 Input::To(Value::Relative(p)) => Range::new(curr, max).to().relative(*p),
@@ -136,7 +137,7 @@ impl TryFrom<&Args> for Slight {
         Ok(Self {
             device: device.clone(),
             exponent,
-            input: Input::try_from(a.input)?,
+            input: Input::try_from(&a.input).unwrap(),
             stdout: a.stdout,
         })
     }

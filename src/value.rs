@@ -26,10 +26,10 @@ impl Mul<f32> for &Sign {
     }
 }
 
-impl TryFrom<String> for Input {
+impl TryFrom<&String> for Input {
     type Error = ();
     // TODO
-    fn try_from(s: String) -> Result<Self, Self::Error> {
+    fn try_from(s: &String) -> Result<Self, Self::Error> {
         let mut chars = s.chars().peekable();
         if let Some(c) = chars.next_if(|&c| c == '-' || c == '+') {
             Ok(Self::By(
@@ -47,7 +47,13 @@ impl TryFrom<String> for Value {
     // TODO
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let chars = s.split('%').collect::<Vec<_>>();
-        todo!()
+        if chars.len() == 1 {
+            Ok(Value::Absolute(chars[0].parse::<usize>().unwrap()))
+        } else if chars.len() == 2 && chars[1] == "" {
+            Ok(Value::Relative(chars[0].parse::<f32>().unwrap()))
+        } else {
+            Err(())
+        }
     }
 }
 

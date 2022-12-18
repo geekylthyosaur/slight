@@ -7,8 +7,8 @@ use crate::{
     device::Device,
     error::{Result, SlightError},
     io::IO,
-    range::Range,
-    value::{Input, Value, Sign},
+    range::{Range, RangeBuilder},
+    value::{Input, Sign, Value},
     Args,
 };
 
@@ -28,7 +28,7 @@ impl Slight {
     pub fn set_brightness(&mut self) -> Result<()> {
         let curr = self.device.brightness.as_value();
         let max = self.device.brightness.max();
-        let range = Self::create_range(curr, self.input, max, self.exponent);
+        let range = Self::create_range(curr, &self.input, max, self.exponent);
         if self.stdout {
             return Ok(Self::print_range(range));
         }
@@ -67,33 +67,38 @@ impl Slight {
         }
     }
 
-    fn print_range(r: impl Iterator<Item = usize>) {
+    fn print_range(r: Box<dyn RangeBuilder>) {
         println!(
             "{}",
-            r.map(|v| v.to_string()).collect::<Vec<_>>().join("\n")
+            r.build()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join("\n")
         );
     }
 
     fn create_range(
         curr: usize,
-        input: Input,
+        input: &Input,
         max: usize,
         exponent: f32,
-    ) -> impl Iterator<Item = usize> {
-        // TODO let r = Range::new().by().percent().exp()
-        // ...
-        // r.get()
-        match input {
-            Input::To(Value::Percent(p)) => todo!(),
-            Input::To(Value::Absolute(v)) => todo!(),
-            Input::By(s, Value::Absolute(v)) => todo!(),
-            Input::By(s, Value::Percent(p)) => todo!(),
-        }
+    ) -> Box<dyn RangeBuilder> {
+        Box::new(
+            match &input {
+                Input::To(Value::Relative(p)) => Range::new(curr, max).to().relative(*p),
+                Input::To(Value::Absolute(v)) => Range::new(curr, max).to().absolute(*v as isize),
+                Input::By(s, Value::Absolute(v)) => Range::new(curr, max)
+                    .by()
+                    .absolute((s * *v as f32) as isize),
+                Input::By(s, Value::Relative(p)) => Range::new(curr, max).by().relative(s * *p),
+            }
+            .exp(exponent),
+        )
     }
 
-    fn set_brightness_range(&mut self, range: impl Iterator<Item = usize>) -> Result<()> {
+    fn set_brightness_range(&mut self, range: Box<dyn RangeBuilder>) -> Result<()> {
         let path = self.device.my_path();
-        for v in range {
+        for v in range.build() {
             self.device.brightness.set(v, &path)?;
             std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
         }
@@ -131,8 +136,7 @@ impl TryFrom<&Args> for Slight {
         Ok(Self {
             device: device.clone(),
             exponent,
-            new_value: a.value,
-            percent: a.percent,
+            input: Input::try_from(a.input)?,
             stdout: a.stdout,
         })
     }

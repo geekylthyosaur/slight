@@ -21,7 +21,7 @@ pub struct Args {
 
     /// to_value: 10, by_value: +-10, by_percent: +-10.0%
     #[clap()]
-    value: String,
+    input: String,
 
     /// Print all available devices and exit
     #[clap(short, long)]

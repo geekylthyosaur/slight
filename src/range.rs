@@ -65,44 +65,46 @@ impl RangeBuilder for Value {
 
 impl RangeBuilder for Exponential {
     fn build(&self) -> Box<dyn Iterator<Item = usize>> {
-        todo!()
-    }
-}
-
-/*
-impl Range {
-    pub fn to_value(&self, new: usize) -> Box<dyn Iterator<Item = usize>> {
-        let r: Box<dyn Iterator<Item = usize>>;
-        match new.cmp(&self.curr) {
-            Ordering::Greater => r = Box::new(self.curr..=new),
-            Ordering::Less => r = Box::new((new..=self.curr).rev()),
-            Ordering::Equal => r = Box::new(std::iter::empty()),
+        match self.value {
+            Value::Absolute(new, Step::To(Range { curr, .. })) => {
+                let new = new as usize;
+                let r: Box<dyn Iterator<Item = usize>>;
+                match new.cmp(&curr) {
+                    Ordering::Greater => r = Box::new(curr..=new),
+                    Ordering::Less => r = Box::new((new..=curr).rev()),
+                    Ordering::Equal => r = Box::new(std::iter::empty()),
+                }
+                r
+            },
+            Value::Absolute(v, Step::By(Range { curr, .. })) => {
+                let new = (curr as isize).checked_add(v).unwrap_or(0) as usize;
+                let r: Box<dyn Iterator<Item = usize>>;
+                match new.cmp(&curr) {
+                    Ordering::Greater => r = Box::new(curr..=new),
+                    Ordering::Less => r = Box::new((new..=curr).rev()),
+                    Ordering::Equal => r = Box::new(std::iter::empty()),
+                }
+                r
+            },
+            Value::Relative(v, Step::To(Range { curr, max })) => {
+                todo!()
+            },
+            Value::Relative(v, Step::By(Range { curr, max })) => {
+                let r: Box<dyn Iterator<Item = usize>> = match v.is_sign_positive() {
+                    true => Box::new(
+                        (0..=max)
+                            .filter(move |&v| v > curr)
+                            .take((v * self.exponent) as usize),
+                    ),
+                    false => Box::new(
+                        (0..=max)
+                            .filter(move |&v| v < curr)
+                            .rev()
+                            .take((v.copysign(1.0) * self.exponent) as usize),
+                    ),
+                };
+                r
+            },
         }
-        r
-    }
-
-    pub fn by_value(&self, diff: isize) -> impl Iterator<Item = usize> {
-        let new = (self.curr as isize).checked_add(diff).unwrap_or(0) as usize;
-        self.to_value(new)
-    }
-
-    pub fn by_percent_exp(&self, percent: f32, exp: f32) -> Box<dyn Iterator<Item = usize>> {
-        // TODO:
-        let (curr, max) = (self.curr, self.max);
-        let r: Box<dyn Iterator<Item = usize>> = match percent.is_sign_positive() {
-            true => Box::new(
-                (0..=max)
-                    .filter(move |&v| v > curr)
-                    .take((percent * exp) as usize),
-            ),
-            false => Box::new(
-                (0..=max)
-                    .filter(move |&v| v < curr)
-                    .rev()
-                    .take((percent.copysign(1.0) * exp) as usize),
-            ),
-        };
-        r
     }
 }
-*/

@@ -20,7 +20,7 @@ pub struct Args {
     id: Option<String>,
 
     /// to_value: 10, by_value: +-10, by_percent: +-10.0%
-    #[clap()]
+    #[clap(allow_hyphen_values(true))]
     input: String,
 
     /// Print all available devices and exit

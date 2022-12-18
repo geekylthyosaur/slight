@@ -49,7 +49,7 @@ impl TryFrom<String> for Value {
         let chars = s.split('%').collect::<Vec<_>>();
         if chars.len() == 1 {
             Ok(Value::Absolute(chars[0].parse::<usize>().unwrap()))
-        } else if chars.len() == 2 && chars[1] == "" {
+        } else if chars.len() == 2 {
             Ok(Value::Relative(chars[0].parse::<f32>().unwrap()))
         } else {
             Err(())

@@ -8,7 +8,7 @@ use crate::{
     error::{Result, SlightError},
     io::IO,
     range::{Range, RangeBuilder},
-    value::{Input, Sign, Value},
+    value::{Input, Value},
     Args,
 };
 
@@ -30,7 +30,8 @@ impl Slight {
         let max = self.device.brightness.max();
         let range = Self::create_range(curr, &self.input, max, self.exponent);
         if self.stdout {
-            return Ok(Self::print_range(range));
+            Self::print_range(range);
+            return Ok(());
         }
         self.set_brightness_range(range)?;
         Ok(())

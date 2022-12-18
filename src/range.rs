@@ -68,27 +68,25 @@ impl RangeBuilder for Exponential {
         match self.value {
             Value::Absolute(new, Step::To(Range { curr, .. })) => {
                 let new = new as usize;
-                let r: Box<dyn Iterator<Item = usize>>;
-                match new.cmp(&curr) {
-                    Ordering::Greater => r = Box::new(curr..=new),
-                    Ordering::Less => r = Box::new((new..=curr).rev()),
-                    Ordering::Equal => r = Box::new(std::iter::empty()),
-                }
+                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
+                    Ordering::Greater => Box::new(curr..=new),
+                    Ordering::Less => Box::new((new..=curr).rev()),
+                    Ordering::Equal => Box::new(std::iter::empty()),
+                };
                 r
-            },
+            }
             Value::Absolute(v, Step::By(Range { curr, .. })) => {
                 let new = (curr as isize).checked_add(v).unwrap_or(0) as usize;
-                let r: Box<dyn Iterator<Item = usize>>;
-                match new.cmp(&curr) {
-                    Ordering::Greater => r = Box::new(curr..=new),
-                    Ordering::Less => r = Box::new((new..=curr).rev()),
-                    Ordering::Equal => r = Box::new(std::iter::empty()),
-                }
+                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
+                    Ordering::Greater => Box::new(curr..=new),
+                    Ordering::Less => Box::new((new..=curr).rev()),
+                    Ordering::Equal => Box::new(std::iter::empty()),
+                };
                 r
-            },
-            Value::Relative(v, Step::To(Range { curr, max })) => {
+            }
+            Value::Relative(_v, Step::To(Range { curr, max })) => {
                 todo!()
-            },
+            }
             Value::Relative(v, Step::By(Range { curr, max })) => {
                 let r: Box<dyn Iterator<Item = usize>> = match v.is_sign_positive() {
                     true => Box::new(
@@ -104,7 +102,7 @@ impl RangeBuilder for Exponential {
                     ),
                 };
                 r
-            },
+            }
         }
     }
 }

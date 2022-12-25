@@ -48,6 +48,9 @@ fn main() {
         return;
     }
 
+    // TODO: args.input == None is unreachable
+    assert!(matches!(args.input, Some(_)));
+
     let mut slight = Slight::try_from(&args).unwrap_or_else(|_| todo!("Error!"));
     slight.set_brightness().unwrap();
 }

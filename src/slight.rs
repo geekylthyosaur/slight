@@ -141,13 +141,7 @@ impl TryFrom<&Args> for Slight {
         Ok(Self {
             device: device.clone(),
             exponent,
-            input: Input::try_from(
-                a.input
-                    .as_ref()
-                    .ok_or_else(|| todo!("Error! No input was provided!"))?
-                    .as_str(),
-            )
-            .unwrap(),
+            input: Input::try_from(a.input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
             stdout: a.stdout,
         })
     }

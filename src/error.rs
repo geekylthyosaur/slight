@@ -13,6 +13,7 @@ pub enum SlightError {
     DeviceBroken(PathBuf),
     IO(IOError),
     Parse, // TODO: Say where error occured
+    NoInput,
 }
 
 impl From<&Path> for SlightError {
@@ -39,6 +40,7 @@ impl Display for SlightError {
             Self::DeviceBroken(p) => write!(f, "No valid device at {}", p.display()),
             Self::IO(e) => write!(f, "{}", e),
             Self::Parse => write!(f, "Given file has invalid data"),
+            Self::NoInput => write!(f, "No input was provided!"),
         }
     }
 }

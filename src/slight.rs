@@ -48,7 +48,7 @@ impl Slight {
                             .as_path()
                             .try_into()
                             .map_or_else(|_| todo!("Log out error"), |device| devices.push(device));
-                    };
+                    }
                 },
             );
         });
@@ -141,7 +141,13 @@ impl TryFrom<&Args> for Slight {
         Ok(Self {
             device: device.clone(),
             exponent,
-            input: Input::try_from(&a.input).unwrap(),
+            input: Input::try_from(
+                a.input
+                    .as_ref()
+                    .ok_or_else(|| todo!("Error! No input was provided!"))?
+                    .as_str(),
+            )
+            .unwrap(),
             stdout: a.stdout,
         })
     }

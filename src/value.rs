@@ -24,10 +24,10 @@ impl std::ops::Mul<f32> for &Sign {
     }
 }
 
-impl TryFrom<&String> for Input {
+impl TryFrom<&str> for Input {
     type Error = ();
     // TODO
-    fn try_from(s: &String) -> Result<Self, Self::Error> {
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
         let mut chars = s.chars().peekable();
         if let Some(c) = chars.next_if(|&c| c == '-' || c == '+') {
             Ok(Self::By(

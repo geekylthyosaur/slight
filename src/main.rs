@@ -21,10 +21,10 @@ pub struct Args {
 
     /// to_value: 10, by_value: +-10, by_percent: +-10.0%
     #[clap(allow_hyphen_values(true))]
-    input: String,
+    input: Option<String>,
 
     /// Print all available devices and exit
-    #[clap(short, long)]
+    #[clap(short, long, conflicts_with("input"))]
     list: Option<Option<String>>,
 
     /// Exponent

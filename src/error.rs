@@ -14,6 +14,8 @@ pub enum SlightError {
     IO(IOError),
     Parse, // TODO: Say where error occured
     NoInput,
+    NoSuitableDeviceFound,
+    NoSpecifiedDeviceFound,
 }
 
 impl From<&Path> for SlightError {
@@ -41,6 +43,8 @@ impl Display for SlightError {
             Self::IO(e) => write!(f, "{}", e),
             Self::Parse => write!(f, "Given file has invalid data"),
             Self::NoInput => write!(f, "No input was provided!"),
+            Self::NoSuitableDeviceFound => write!(f, "No suitable device found!"),
+            Self::NoSpecifiedDeviceFound => write!(f, "No specified device found!"),
         }
     }
 }

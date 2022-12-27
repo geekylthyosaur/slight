@@ -34,6 +34,10 @@ pub struct Args {
     /// Write to stdout instead of sysfs
     #[clap(short, long)]
     stdout: bool,
+
+    /// Being verbose about what is going
+    #[clap(short, long)]
+    verbose: bool,
 }
 
 fn main() {
@@ -42,15 +46,16 @@ fn main() {
     if let Some(list) = args.list {
         if let Some(_id) = list {
             // TODO: print single device
-        } else {
-            Slight::print_devices();
+        } else if let Err(e) = Slight::print_devices() {
+            eprintln!("{}", e);
+            std::process::exit(1);
         }
         return;
     }
 
-    // TODO: args.input == None is unreachable
-    assert!(matches!(args.input, Some(_)));
-
-    let mut slight = Slight::try_from(&args).unwrap_or_else(|_| todo!("Error!"));
+    let mut slight = Slight::try_from(&args).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        std::process::exit(1);
+    });
     slight.set_brightness().unwrap();
 }

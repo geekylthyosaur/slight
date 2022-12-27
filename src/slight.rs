@@ -21,6 +21,7 @@ pub struct Slight {
     exponent: Option<f32>,
     input: Input,
     stdout: bool,
+    verbose: bool,
 }
 
 impl Slight {
@@ -36,27 +37,28 @@ impl Slight {
         Ok(())
     }
 
-    fn scan_devices() -> Vec<Device> {
+    fn scan_devices() -> Result<Vec<Device>> {
         let mut devices = Vec::new();
         Class::iter().map(|c| PathBuf::from(&c)).for_each(|class| {
             IO::scan(&class).map_or_else(
-                |_| todo!("Log out error"),
+                //TODO: print only if self.verbose
+                |e| eprintln!("Failed to read class: {}", e),
                 |ids| {
                     for id in ids {
-                        class
-                            .join(id)
-                            .as_path()
-                            .try_into()
-                            .map_or_else(|_| todo!("Log out error"), |device| devices.push(device));
+                        class.join(id).as_path().try_into().map_or_else(
+                            //TODO: print only if self.verbose
+                            |e| eprintln!("Failed to read device: {}", e),
+                            |device| devices.push(device),
+                        )
                     }
                 },
-            );
+            )
         });
-        devices
+        Ok(devices)
     }
 
-    pub fn print_devices() {
-        let devices = Self::scan_devices();
+    pub fn print_devices() -> Result<()> {
+        let devices = Self::scan_devices()?;
         if devices.is_empty() {
             println!("No devices found!");
         } else {
@@ -65,6 +67,7 @@ impl Slight {
                 println!("\t{}", dev);
             }
         }
+        Ok(())
     }
 
     fn print_range(r: Box<dyn RangeBuilder>) {
@@ -111,9 +114,9 @@ impl Slight {
 
     fn select_device<'a>(devices: &'a [Device], id: Option<&'a str>) -> Result<&'a Device> {
         if let Some(id) = id {
-            Self::find_device(devices, id).ok_or_else(|| todo!("Error! No specified device found!"))
+            Self::find_device(devices, id).ok_or(SlightError::NoSpecifiedDeviceFound)
         } else {
-            Self::default_device(devices).ok_or_else(|| todo!("Error! No suitable default device!"))
+            Self::default_device(devices).ok_or(SlightError::NoSuitableDeviceFound)
         }
     }
 
@@ -130,7 +133,7 @@ impl TryFrom<&Args> for Slight {
     type Error = SlightError;
 
     fn try_from(a: &Args) -> std::result::Result<Self, Self::Error> {
-        let devices = Self::scan_devices();
+        let devices = Self::scan_devices()?;
         // TODO: any reasons to pass a reference?
         let device = Self::select_device(&devices, a.id.as_deref())?;
         let exponent = match a.exponent {
@@ -143,6 +146,7 @@ impl TryFrom<&Args> for Slight {
             exponent,
             input: Input::try_from(a.input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
             stdout: a.stdout,
+            verbose: a.verbose,
         })
     }
 }

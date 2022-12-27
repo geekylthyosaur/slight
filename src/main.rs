@@ -35,7 +35,7 @@ pub struct Args {
     #[clap(short, long)]
     stdout: bool,
 
-    /// Being verbose about what is going
+    /// Being verbose about what is going on
     #[clap(short, long)]
     verbose: bool,
 }
@@ -45,7 +45,7 @@ fn main() {
 
     if let Some(list) = args.list {
         if let Some(_id) = list {
-            // TODO: print single device
+            todo!("print single device")
         } else if let Err(e) = Slight::print_devices() {
             eprintln!("{}", e);
             std::process::exit(1);

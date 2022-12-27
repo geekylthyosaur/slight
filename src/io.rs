@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::error::{Result, SlightError};
 
 use std::path::Path;
 
@@ -15,9 +15,12 @@ impl IO {
     }
 
     pub fn read_number(path: &Path) -> Result<usize> {
-        Ok(String::from_utf8_lossy(&std::fs::read(path)?)
-            .trim()
-            .parse::<usize>()?)
+        String::from_utf8_lossy(
+            &std::fs::read(path).map_err(|e| SlightError::ReadNumber(path.to_path_buf(), e))?,
+        )
+        .trim()
+        .parse::<usize>()
+        .map_err(|_| SlightError::ParseNumber(path.to_path_buf()))
     }
 
     pub fn write_number(path: &Path, value: usize) -> Result<()> {

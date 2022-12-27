@@ -121,11 +121,11 @@ impl Slight {
     }
 
     fn find_device<'a>(devices: &'a [Device], id: &'a str) -> Option<&'a Device> {
-        devices.iter().find(|d| d.id == id)
+        devices.iter().find(|&d| d.id == id)
     }
 
     fn default_device(devices: &[Device]) -> Option<&Device> {
-        devices.iter().find(|d| d.class == Class::Backlight)
+        devices.iter().find(|&d| d.class == Class::Backlight)
     }
 }
 

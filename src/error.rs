@@ -4,15 +4,15 @@ use std::{
 };
 
 type IOError = std::io::Error;
-type ParseError = std::num::ParseIntError;
 
 pub type Result<T> = std::result::Result<T, SlightError>;
 
 #[derive(Debug)]
 pub enum SlightError {
     DeviceBroken(PathBuf),
+    ReadNumber(PathBuf, IOError),
+    ParseNumber(PathBuf),
     IO(IOError),
-    Parse, // TODO: Say where error occured
     NoInput,
     NoSuitableDeviceFound,
     NoSpecifiedDeviceFound,
@@ -30,18 +30,13 @@ impl From<IOError> for SlightError {
     }
 }
 
-impl From<ParseError> for SlightError {
-    fn from(_: ParseError) -> Self {
-        Self::Parse
-    }
-}
-
 impl Display for SlightError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::DeviceBroken(p) => write!(f, "No valid device at {}", p.display()),
+            Self::ReadNumber(p, e) => write!(f, "Cannot read {}: {}", p.display(), e),
+            Self::ParseNumber(p) => write!(f, "{} has invalid data", p.display()),
             Self::IO(e) => write!(f, "{}", e),
-            Self::Parse => write!(f, "Given file has invalid data"),
             Self::NoInput => write!(f, "No input was provided!"),
             Self::NoSuitableDeviceFound => write!(f, "No suitable device found!"),
             Self::NoSpecifiedDeviceFound => write!(f, "No specified device found!"),

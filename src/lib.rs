@@ -73,15 +73,16 @@ impl Slight {
 
     fn scan_devices() -> Result<Vec<Device>> {
         let mut devices = Vec::new();
-        Class::iter().map(|c| PathBuf::from(&c)).for_each(|class| {
-            IO::scan(&class).map_or_else(
+        Class::iter().for_each(|class| {
+            let c = PathBuf::from(&class);
+            IO::scan(&c).map_or_else(
                 //TODO: print only if self.verbose
-                |e| eprintln!("Failed to read class: {}", e),
+                |e| eprintln!("Failed to read class '{}': {}", class, e),
                 |ids| {
                     for id in ids {
-                        class.join(id).as_path().try_into().map_or_else(
+                        c.join(&id).as_path().try_into().map_or_else(
                             //TODO: print only if self.verbose
-                            |e| eprintln!("Failed to read device: {}", e),
+                            |e| eprintln!("Failed to read device '{}': {}", id, e),
                             |device| devices.push(device),
                         )
                     }

@@ -1,4 +1,4 @@
-use slight::Slight;
+use slight::{Slight, Flags};
 
 use clap::Parser;
 
@@ -48,8 +48,7 @@ fn main() {
         args.id,
         args.exponent,
         args.input,
-        args.stdout,
-        args.verbose,
+        Flags { stdout: args.stdout, ..Flags::default() },
     )
     .unwrap_or_else(|e| {
         eprintln!("{}", e);

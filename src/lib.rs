@@ -23,12 +23,17 @@ const EXPONENT_DEFAULT: f32 = 4.0;
 // TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
 const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
+#[derive(Default)]
+pub struct Flags {
+    pub stdout: bool,
+    pub verbose: bool,
+}
+
 pub struct Slight {
     device: Device,
     exponent: Option<f32>,
     input: Input,
-    stdout: bool,
-    verbose: bool,
+    flags: Flags,
 }
 
 impl Slight {
@@ -36,8 +41,7 @@ impl Slight {
         id: Option<String>,
         exponent: Option<Option<f32>>,
         input: Option<String>,
-        stdout: bool,
-        verbose: bool,
+        flags: Flags,
     ) -> Result<Self> {
         let devices = Self::scan_devices()?;
         // TODO: any reasons to pass a reference?
@@ -51,8 +55,7 @@ impl Slight {
             device: device.clone(),
             exponent,
             input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
-            stdout,
-            verbose,
+            flags
         })
     }
 
@@ -60,7 +63,7 @@ impl Slight {
         let curr = self.device.brightness.as_value();
         let max = self.device.brightness.max();
         let range = Self::create_range(curr, &self.input, max, self.exponent);
-        if self.stdout {
+        if self.flags.stdout {
             Self::print_range(range);
             return Ok(());
         }

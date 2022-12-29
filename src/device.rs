@@ -12,7 +12,7 @@ pub struct Device {
 
 impl Device {
     pub fn my_path(&self) -> PathBuf {
-        PathBuf::from(&self.class).join(&self.id.0)
+        PathBuf::from(self.class).join(&self.id.0)
     }
 }
 

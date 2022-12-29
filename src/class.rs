@@ -9,14 +9,14 @@ const PATH: &str = "/sys/class";
 const BACKLIGHT: &str = "backlight";
 const LED: &str = "leds";
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter)]
 pub enum Class {
     Backlight,
     Led,
 }
 
-impl From<&Class> for PathBuf {
-    fn from(c: &Class) -> Self {
+impl From<Class> for PathBuf {
+    fn from(c: Class) -> Self {
         let path = Path::new(PATH);
         match c {
             Class::Backlight => path.join(BACKLIGHT),

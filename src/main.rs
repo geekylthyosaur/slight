@@ -1,12 +1,3 @@
-mod brightness;
-mod class;
-mod device;
-mod error;
-mod io;
-mod range;
-mod slight;
-mod value;
-
 use slight::Slight;
 
 use clap::Parser;
@@ -53,7 +44,14 @@ fn main() {
         return;
     }
 
-    let mut slight = Slight::try_from(&args).unwrap_or_else(|e| {
+    let mut slight = Slight::new(
+        args.id,
+        args.exponent,
+        args.input,
+        args.stdout,
+        args.verbose,
+    )
+    .unwrap_or_else(|e| {
         eprintln!("{}", e);
         std::process::exit(1);
     });

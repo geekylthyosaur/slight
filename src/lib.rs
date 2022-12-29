@@ -1,3 +1,11 @@
+mod brightness;
+mod class;
+mod device;
+mod error;
+mod io;
+mod range;
+mod value;
+
 use strum::IntoEnumIterator;
 
 use std::path::PathBuf;
@@ -9,7 +17,6 @@ use crate::{
     io::IO,
     range::{Range, RangeBuilder},
     value::{Input, Value},
-    Args,
 };
 
 const EXPONENT_DEFAULT: f32 = 4.0;
@@ -25,6 +32,30 @@ pub struct Slight {
 }
 
 impl Slight {
+    pub fn new(
+        id: Option<String>,
+        exponent: Option<Option<f32>>,
+        input: Option<String>,
+        stdout: bool,
+        verbose: bool,
+    ) -> Result<Self> {
+        let devices = Self::scan_devices()?;
+        // TODO: any reasons to pass a reference?
+        let device = Self::select_device(&devices, id.as_deref())?;
+        let exponent = match exponent {
+            None => None,
+            Some(None) => Some(EXPONENT_DEFAULT),
+            Some(Some(v)) => Some(v),
+        };
+        Ok(Self {
+            device: device.clone(),
+            exponent,
+            input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
+            stdout,
+            verbose,
+        })
+    }
+
     pub fn set_brightness(&mut self) -> Result<()> {
         let curr = self.device.brightness.as_value();
         let max = self.device.brightness.max();
@@ -126,27 +157,5 @@ impl Slight {
 
     fn default_device(devices: &[Device]) -> Option<&Device> {
         devices.iter().find(|&d| d.class == Class::Backlight)
-    }
-}
-
-impl TryFrom<&Args> for Slight {
-    type Error = SlightError;
-
-    fn try_from(a: &Args) -> std::result::Result<Self, Self::Error> {
-        let devices = Self::scan_devices()?;
-        // TODO: any reasons to pass a reference?
-        let device = Self::select_device(&devices, a.id.as_deref())?;
-        let exponent = match a.exponent {
-            None => None,
-            Some(None) => Some(EXPONENT_DEFAULT),
-            Some(Some(v)) => Some(v),
-        };
-        Ok(Self {
-            device: device.clone(),
-            exponent,
-            input: Input::try_from(a.input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
-            stdout: a.stdout,
-            verbose: a.verbose,
-        })
     }
 }

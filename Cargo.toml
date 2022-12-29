@@ -3,6 +3,14 @@ name = "slight"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "slight"
+path = "src/lib.rs"
+
+[[bin]]
+name = "slight_cli"
+path = "src/main.rs"
+
 [dependencies]
 clap = { version = "3.2", features = [ "derive" ] }
 strum = { version = "0.24", features = [ "derive" ] }

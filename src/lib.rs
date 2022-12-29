@@ -94,7 +94,7 @@ impl Slight {
     pub fn print_devices() -> Result<()> {
         let devices = Self::scan_devices()?;
         if devices.is_empty() {
-            println!("No devices found!");
+            return Err(SlightError::NoDevices)
         } else {
             println!("Found devices:");
             for dev in devices {

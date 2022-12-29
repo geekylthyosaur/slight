@@ -14,6 +14,7 @@ pub enum SlightError {
     ParseNumber(PathBuf),
     IO(IOError),
     NoInput,
+    NoDevices,
     NoSuitableDeviceFound,
     NoSpecifiedDeviceFound,
 }
@@ -38,6 +39,7 @@ impl Display for SlightError {
             Self::ParseNumber(p) => write!(f, "{} has invalid data", p.display()),
             Self::IO(e) => write!(f, "{}", e),
             Self::NoInput => write!(f, "No input was provided!"),
+            Self::NoDevices => write!(f, "No devices found!"),
             Self::NoSuitableDeviceFound => write!(f, "No suitable device found!"),
             Self::NoSpecifiedDeviceFound => write!(f, "No specified device found!"),
         }

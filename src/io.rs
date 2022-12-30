@@ -30,8 +30,4 @@ impl IO {
     pub fn dir(path: &Path) -> Option<&str> {
         path.is_dir().then_some(path.file_name()?.to_str()?)
     }
-
-    pub fn parent_dir(path: &Path) -> Option<&str> {
-        path.parent()?.file_name()?.to_str()
-    }
 }

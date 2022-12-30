@@ -55,7 +55,7 @@ impl Slight {
             device: device.clone(),
             exponent,
             input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
-            flags
+            flags,
         })
     }
 
@@ -74,13 +74,13 @@ impl Slight {
     fn scan_devices() -> Result<Vec<Device>> {
         let mut devices = Vec::new();
         Class::iter().for_each(|class| {
-            let c = PathBuf::from(class);
-            IO::scan(&c).map_or_else(
+            let path: PathBuf = class.into();
+            IO::scan(&path).map_or_else(
                 //TODO: print only if self.verbose
                 |e| eprintln!("Failed to read class '{}': {}", class, e),
                 |ids| {
                     for id in ids {
-                        c.join(&id).as_path().try_into().map_or_else(
+                        Device::new(class, path.join(&id).as_path()).map_or_else(
                             //TODO: print only if self.verbose
                             |e| eprintln!("Failed to read device '{}': {}", id, e),
                             |device| devices.push(device),
@@ -95,7 +95,7 @@ impl Slight {
     pub fn print_devices() -> Result<()> {
         let devices = Self::scan_devices()?;
         if devices.is_empty() {
-            return Err(SlightError::NoDevices)
+            return Err(SlightError::NoDevices);
         } else {
             println!("Found devices:");
             for dev in devices {

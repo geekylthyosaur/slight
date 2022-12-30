@@ -1,7 +1,12 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::{Path, PathBuf};
 
-use crate::{brightness::Brightness, class::Class, error::SlightError, io::IO};
+use crate::{
+    brightness::Brightness,
+    class::Class,
+    error::{Result, SlightError},
+    io::IO,
+};
 
 #[derive(Debug, Clone)]
 pub struct Device {
@@ -11,20 +16,16 @@ pub struct Device {
 }
 
 impl Device {
+    pub fn new(class: Class, path: &Path) -> Result<Self> {
+        Ok(Self {
+            class,
+            id: path.try_into()?,
+            brightness: path.try_into()?,
+        })
+    }
+
     pub fn my_path(&self) -> PathBuf {
         PathBuf::from(self.class).join(&self.id.0)
-    }
-}
-
-impl TryFrom<&Path> for Device {
-    type Error = SlightError;
-
-    fn try_from(p: &Path) -> std::result::Result<Self, Self::Error> {
-        Ok(Device {
-            class: p.try_into()?,
-            id: p.try_into()?,
-            brightness: p.try_into()?,
-        })
     }
 }
 

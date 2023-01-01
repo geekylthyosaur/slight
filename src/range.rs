@@ -5,6 +5,42 @@ pub struct Range {
     max: usize,
 }
 
+impl Range {
+    fn from_a_to_b(a: usize, b: usize) -> Box<dyn Iterator<Item = usize>> {
+        let r: Box<dyn Iterator<Item = usize>> = match b.cmp(&a) {
+            Ordering::Greater => Box::new(a..=b),
+            Ordering::Less => Box::new((b..=a).rev()),
+            Ordering::Equal => Box::new(std::iter::empty()),
+        };
+        r
+    }
+
+    fn by_percent(
+        curr: usize,
+        max: usize,
+        diff_percent: f32,
+        exponent: f32,
+    ) -> Box<dyn Iterator<Item = usize>> {
+        let r: Box<dyn Iterator<Item = usize>> = if diff_percent.is_sign_positive() {
+            Box::new(
+                // TODO: 0..=max len should be 100
+                (0..=max)
+                    .filter(move |&v| v > curr)
+                    .take((diff_percent * exponent) as usize),
+            )
+        } else {
+            Box::new(
+                // TODO: 0..=max len should be 100
+                (0..=max)
+                    .filter(move |&v| v < curr)
+                    .rev()
+                    .take((diff_percent.copysign(1.0) * exponent) as usize),
+            )
+        };
+        r
+    }
+}
+
 pub enum Step {
     To(Range),
     By(Range),
@@ -62,49 +98,18 @@ impl RangeBuilder for Value {
         match *self {
             Value::Absolute(new, Step::To(Range { curr, .. })) => {
                 let new = new as usize;
-                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
-                    Ordering::Greater => Box::new(curr..=new),
-                    Ordering::Less => Box::new((new..=curr).rev()),
-                    Ordering::Equal => Box::new(std::iter::empty()),
-                };
-                r
+                Range::from_a_to_b(curr, new)
             }
             Value::Absolute(v, Step::By(Range { curr, .. })) => {
                 let new = (curr as isize).checked_add(v).unwrap_or(0) as usize;
-                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
-                    Ordering::Greater => Box::new(curr..=new),
-                    Ordering::Less => Box::new((new..=curr).rev()),
-                    Ordering::Equal => Box::new(std::iter::empty()),
-                };
-                r
+                Range::from_a_to_b(curr, new)
             }
-            Value::Relative(v, Step::To(Range { curr, max })) => {
-                let new = (max as f32 / 100.0 * v) as usize;
-                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
-                    Ordering::Greater => Box::new(curr..=new),
-                    Ordering::Less => Box::new((new..=curr).rev()),
-                    Ordering::Equal => Box::new(std::iter::empty()),
-                };
-                r
+            Value::Relative(percent, Step::To(Range { curr, max })) => {
+                let new = (max as f32 / 100.0 * percent) as usize;
+                Range::from_a_to_b(curr, new)
             }
-            Value::Relative(v, Step::By(Range { curr, max })) => {
-                let r: Box<dyn Iterator<Item = usize>> = if v.is_sign_positive() {
-                    Box::new(
-                        // TODO: 0..=max len should be 100
-                        (0..=max)
-                            .filter(move |&v| v > curr)
-                            .take((v) as usize),
-                    )
-                } else {
-                    Box::new(
-                        // TODO: 0..=max len should be 100
-                        (0..=max)
-                            .filter(move |&v| v < curr)
-                            .rev()
-                            .take(v.copysign(1.0) as usize),
-                    )
-                };
-                r
+            Value::Relative(percent, Step::By(Range { curr, max })) => {
+                Range::by_percent(curr, max, percent, 1.0)
             }
         }
     }
@@ -115,49 +120,18 @@ impl RangeBuilder for Exponential {
         match self.value {
             Value::Absolute(new, Step::To(Range { curr, .. })) => {
                 let new = new as usize;
-                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
-                    Ordering::Greater => Box::new(curr..=new),
-                    Ordering::Less => Box::new((new..=curr).rev()),
-                    Ordering::Equal => Box::new(std::iter::empty()),
-                };
-                r
+                Range::from_a_to_b(curr, new)
             }
             Value::Absolute(v, Step::By(Range { curr, .. })) => {
                 let new = (curr as isize).checked_add(v).unwrap_or(0) as usize;
-                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
-                    Ordering::Greater => Box::new(curr..=new),
-                    Ordering::Less => Box::new((new..=curr).rev()),
-                    Ordering::Equal => Box::new(std::iter::empty()),
-                };
-                r
+                Range::from_a_to_b(curr, new)
             }
-            Value::Relative(v, Step::To(Range { curr, max })) => {
-                let new = (max as f32 / 100.0 * v) as usize;
-                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
-                    Ordering::Greater => Box::new(curr..=new),
-                    Ordering::Less => Box::new((new..=curr).rev()),
-                    Ordering::Equal => Box::new(std::iter::empty()),
-                };
-                r
+            Value::Relative(percent, Step::To(Range { curr, max })) => {
+                let new = (max as f32 / 100.0 * percent) as usize;
+                Range::from_a_to_b(curr, new)
             }
-            Value::Relative(v, Step::By(Range { curr, max })) => {
-                let r: Box<dyn Iterator<Item = usize>> = if v.is_sign_positive() {
-                    Box::new(
-                        // TODO: 0..=max len should be 100
-                        (0..=max)
-                            .filter(move |&v| v > curr)
-                            .take((v * self.exponent) as usize),
-                    )
-                } else {
-                    Box::new(
-                        // TODO: 0..=max len should be 100
-                        (0..=max)
-                            .filter(move |&v| v < curr)
-                            .rev()
-                            .take((v.copysign(1.0) * self.exponent) as usize),
-                    )
-                };
-                r
+            Value::Relative(percent, Step::By(Range { curr, max })) => {
+                Range::by_percent(curr, max, percent, self.exponent)
             }
         }
     }

@@ -59,7 +59,54 @@ impl Value {
 
 impl RangeBuilder for Value {
     fn build(&self) -> Box<dyn Iterator<Item = usize>> {
-        todo!()
+        match *self {
+            Value::Absolute(new, Step::To(Range { curr, .. })) => {
+                let new = new as usize;
+                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
+                    Ordering::Greater => Box::new(curr..=new),
+                    Ordering::Less => Box::new((new..=curr).rev()),
+                    Ordering::Equal => Box::new(std::iter::empty()),
+                };
+                r
+            }
+            Value::Absolute(v, Step::By(Range { curr, .. })) => {
+                let new = (curr as isize).checked_add(v).unwrap_or(0) as usize;
+                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
+                    Ordering::Greater => Box::new(curr..=new),
+                    Ordering::Less => Box::new((new..=curr).rev()),
+                    Ordering::Equal => Box::new(std::iter::empty()),
+                };
+                r
+            }
+            Value::Relative(v, Step::To(Range { curr, max })) => {
+                let new = (max as f32 / 100.0 * v) as usize;
+                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
+                    Ordering::Greater => Box::new(curr..=new),
+                    Ordering::Less => Box::new((new..=curr).rev()),
+                    Ordering::Equal => Box::new(std::iter::empty()),
+                };
+                r
+            }
+            Value::Relative(v, Step::By(Range { curr, max })) => {
+                let r: Box<dyn Iterator<Item = usize>> = if v.is_sign_positive() {
+                    Box::new(
+                        // TODO: 0..=max len should be 100
+                        (0..=max)
+                            .filter(move |&v| v > curr)
+                            .take((v) as usize),
+                    )
+                } else {
+                    Box::new(
+                        // TODO: 0..=max len should be 100
+                        (0..=max)
+                            .filter(move |&v| v < curr)
+                            .rev()
+                            .take(v.copysign(1.0) as usize),
+                    )
+                };
+                r
+            }
+        }
     }
 }
 
@@ -84,18 +131,26 @@ impl RangeBuilder for Exponential {
                 };
                 r
             }
-            Value::Relative(_v, Step::To(Range { curr, max })) => {
-                todo!()
+            Value::Relative(v, Step::To(Range { curr, max })) => {
+                let new = (max as f32 / 100.0 * v) as usize;
+                let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&curr) {
+                    Ordering::Greater => Box::new(curr..=new),
+                    Ordering::Less => Box::new((new..=curr).rev()),
+                    Ordering::Equal => Box::new(std::iter::empty()),
+                };
+                r
             }
             Value::Relative(v, Step::By(Range { curr, max })) => {
                 let r: Box<dyn Iterator<Item = usize>> = if v.is_sign_positive() {
                     Box::new(
+                        // TODO: 0..=max len should be 100
                         (0..=max)
                             .filter(move |&v| v > curr)
                             .take((v * self.exponent) as usize),
                     )
                 } else {
                     Box::new(
+                        // TODO: 0..=max len should be 100
                         (0..=max)
                             .filter(move |&v| v < curr)
                             .rev()

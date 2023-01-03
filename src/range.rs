@@ -23,31 +23,25 @@ impl Range {
     ) -> Box<dyn Iterator<Item = usize>> {
         let r: Box<dyn Iterator<Item = usize>> = if diff_percent.is_sign_positive() {
             Box::new(
-                Range::normalized(0, max)
+                Range::exponential(max, exponent)
                     .filter(move |&v| v > curr)
-                    .take((diff_percent * exponent) as usize),
+                    .take((diff_percent) as usize),
             )
         } else {
             Box::new(
-                Range::normalized(0, max)
+                Range::exponential(max, exponent)
                     .filter(move |&v| v < curr)
                     .rev()
-                    .take((diff_percent.copysign(1.0) * exponent) as usize),
+                    .take((diff_percent.copysign(1.0)) as usize),
             )
         };
         r
     }
 
-    fn normalized(min: usize, max: usize) -> Box<dyn DoubleEndedIterator<Item = usize>> {
-        let mut v = vec![];
-        let diff = (max as f32 - min as f32) / 100.0;
-        let mut n = min as f32 + diff;
-
-        while n as usize <= max {
-            v.push(n as usize);
-            n += diff;
-        }
-        Box::new(v.into_iter())
+    fn exponential(max: usize, exponent: f32) -> Box<dyn DoubleEndedIterator<Item = usize>> {
+        Box::new((0..=100).map(move |v: usize| {
+            ((v as f32).powf(exponent) * 100f32.powf(-exponent) * max as f32) as usize
+        }))
     }
 }
 
@@ -144,15 +138,5 @@ impl RangeBuilder for Exponential {
                 Range::by_percent(curr, max, percent, self.exponent)
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn range_normalized_len_eq_100() {
-        assert_eq!(Range::normalized(0, 255).count(), 100);
     }
 }

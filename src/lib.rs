@@ -8,7 +8,7 @@ mod value;
 
 use strum::IntoEnumIterator;
 
-use std::path::PathBuf;
+use std::{borrow::Cow, path::PathBuf};
 
 use crate::{
     class::Class,
@@ -103,6 +103,18 @@ impl Slight {
             for dev in devices {
                 println!("{}", dev);
             }
+        }
+        Ok(())
+    }
+
+    pub fn print_device(id: Cow<str>) -> Result<()> {
+        let devices = Self::scan_devices()?;
+        if devices.is_empty() {
+            return Err(SlightError::NoDevices);
+        } else {
+            let dev = Self::find_device(&devices, id.as_ref())
+                .ok_or(SlightError::NoSpecifiedDeviceFound)?;
+            println!("{}", dev);
         }
         Ok(())
     }

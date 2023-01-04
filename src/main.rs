@@ -35,8 +35,11 @@ fn main() {
     let args = Args::parse();
 
     if let Some(list) = args.list {
-        if let Some(_id) = list {
-            todo!("print single device")
+        if let Some(id) = list {
+            if let Err(e) = Slight::print_device(id.into()) {
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
         } else if let Err(e) = Slight::print_devices() {
             eprintln!("{}", e);
             std::process::exit(1);

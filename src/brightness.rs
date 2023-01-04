@@ -16,10 +16,9 @@ pub struct Brightness {
 }
 
 impl Brightness {
-    pub fn set(&mut self, new: usize, out: &mut dyn std::io::Write) -> Result<()> {
+    pub fn set(&mut self, new: usize, io: &mut IO) -> Result<()> {
         if new != self.current && new <= self.max {
-            // TODO
-            IO::write_number(out, new).map(|_| self.current = new)?;
+            io.write_number(new).map(|_| self.current = new)?;
         } // TODO: else
         Ok(())
     }

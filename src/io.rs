@@ -1,8 +1,29 @@
-use crate::error::{Result, SlightError};
+use crate::{
+    brightness::CURRENT_BRIGHTNESS_FILENAME,
+    error::{Result, SlightError},
+};
 
 use std::path::Path;
 
-pub struct IO;
+pub struct IO {
+    out: Box<dyn std::io::Write>,
+}
+
+impl IO {
+    pub fn new(path: &Path) -> Result<Self> {
+        Ok(Self {
+            out: Box::new(std::fs::File::create(
+                path.join(CURRENT_BRIGHTNESS_FILENAME),
+            )?) as Box<dyn std::io::Write>,
+        })
+    }
+
+    pub fn stdout() -> Self {
+        Self {
+            out: Box::new(std::io::stdout()) as Box<dyn std::io::Write>,
+        }
+    }
+}
 
 impl IO {
     pub fn scan(path: &Path) -> Result<Vec<String>> {
@@ -23,8 +44,8 @@ impl IO {
         .map_err(|_| SlightError::ParseNumber(path.to_path_buf()))
     }
 
-    pub fn write_number(out: &mut dyn std::io::Write, value: usize) -> Result<()> {
-        Ok(out.write_all(format!("{}\n", value).as_bytes())?)
+    pub fn write_number(&mut self, value: usize) -> Result<()> {
+        Ok(self.out.write_all(format!("{}\n", value).as_bytes())?)
     }
 
     pub fn dir(path: &Path) -> Option<&str> {

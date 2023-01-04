@@ -33,6 +33,7 @@ pub struct Slight {
     device: Device,
     exponent: Option<f32>,
     input: Input,
+    io: IO,
     flags: Flags,
 }
 
@@ -51,11 +52,17 @@ impl Slight {
             Some(None) => Some(EXPONENT_DEFAULT),
             Some(Some(v)) => Some(v),
         };
+        let io = if flags.stdout {
+            IO::stdout()
+        } else {
+            IO::new(&device.my_path())?
+        };
         Ok(Self {
             device: device.clone(),
             exponent,
             // TODO unwrap
             input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
+            io,
             flags,
         })
     }
@@ -125,18 +132,8 @@ impl Slight {
     }
 
     fn set_brightness_range(&mut self, range: Box<dyn RangeBuilder>) -> Result<()> {
-        let path = self.device.my_path();
-        let mut out = if self.flags.stdout {
-            Box::new(std::io::stdout()) as Box<dyn std::io::Write>
-        } else {
-            // TODO: creating file here?
-            Box::new(std::fs::File::create(
-                path.join(brightness::CURRENT_BRIGHTNESS_FILENAME),
-            )?) as Box<dyn std::io::Write>
-        };
-
         for v in range.build() {
-            self.device.brightness.set(v, out.as_mut())?;
+            self.device.brightness.set(v, &mut self.io)?;
             std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
         }
         Ok(())

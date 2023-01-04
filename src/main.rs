@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use slight::{Flags, Slight};
 
 use clap::Parser;
@@ -48,7 +50,7 @@ fn main() {
     }
 
     let mut slight = Slight::new(
-        args.id,
+        args.id.map(Cow::from),
         args.exponent,
         args.input,
         Flags {

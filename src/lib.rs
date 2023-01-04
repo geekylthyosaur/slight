@@ -39,14 +39,14 @@ pub struct Slight {
 
 impl Slight {
     pub fn new(
-        id: Option<String>,
+        id: Option<Cow<str>>,
         exponent: Option<Option<f32>>,
         input: Option<String>,
         flags: Flags,
     ) -> Result<Self> {
         let devices = Self::scan_devices()?;
         // TODO: any reasons to pass a reference?
-        let device = Self::select_device(&devices, id.as_deref())?;
+        let device = Self::select_device(&devices, id)?;
         let exponent = match exponent {
             None => NO_EXPONENT_DEFAULT,
             Some(None) => EXPONENT_DEFAULT,
@@ -112,8 +112,7 @@ impl Slight {
         if devices.is_empty() {
             return Err(SlightError::NoDevices);
         } else {
-            let dev = Self::find_device(&devices, id.as_ref())
-                .ok_or(SlightError::NoSpecifiedDeviceFound)?;
+            let dev = Self::find_device(&devices, id).ok_or(SlightError::NoSpecifiedDeviceFound)?;
             println!("{}", dev);
         }
         Ok(())
@@ -142,7 +141,7 @@ impl Slight {
         Ok(())
     }
 
-    fn select_device<'a>(devices: &'a [Device], id: Option<&'a str>) -> Result<&'a Device> {
+    fn select_device<'a>(devices: &'a [Device], id: Option<Cow<str>>) -> Result<&'a Device> {
         if let Some(id) = id {
             Self::find_device(devices, id).ok_or(SlightError::NoSpecifiedDeviceFound)
         } else {
@@ -150,8 +149,8 @@ impl Slight {
         }
     }
 
-    fn find_device<'a>(devices: &'a [Device], id: &'a str) -> Option<&'a Device> {
-        devices.iter().find(|&d| d.id == id)
+    fn find_device<'a>(devices: &'a [Device], id: Cow<str>) -> Option<&'a Device> {
+        devices.iter().find(|&d| d.id == id.as_ref())
     }
 
     fn default_device(devices: &[Device]) -> Option<&Device> {

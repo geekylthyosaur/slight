@@ -6,7 +6,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    /// Device Id
+    /// Change brightness of device with given id (use --list to find one)
     #[clap(short, long)]
     id: Option<String>,
 
@@ -14,11 +14,11 @@ pub struct Args {
     #[clap(allow_hyphen_values(true))]
     input: Option<String>,
 
-    /// Print all available devices and exit
+    /// List all available devices or the one with given id
     #[clap(short, long, conflicts_with("input"))]
     list: Option<Option<String>>,
 
-    /// Exponent
+    /// Use exponential range with given exponent (or default = 4.0)
     #[clap(short, long)]
     exponent: Option<Option<f32>>,
 
@@ -57,5 +57,6 @@ fn main() {
         eprintln!("{}", e);
         std::process::exit(1);
     });
+    // TODO: unwrap
     slight.set_brightness().unwrap();
 }

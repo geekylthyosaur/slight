@@ -6,7 +6,7 @@ use crate::{
     io::IO,
 };
 
-const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
+pub const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
 const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
 #[derive(Debug, Clone)]
@@ -16,10 +16,10 @@ pub struct Brightness {
 }
 
 impl Brightness {
-    pub fn set(&mut self, new: usize, path: &Path) -> Result<()> {
+    pub fn set(&mut self, new: usize, out: &mut dyn std::io::Write) -> Result<()> {
         if new != self.current && new <= self.max {
-            return IO::write_number(&path.join(CURRENT_BRIGHTNESS_FILENAME), new)
-                .map(|_| self.current = new);
+            // TODO
+            IO::write_number(out, new).map(|_| self.current = new)?;
         } // TODO: else
         Ok(())
     }

@@ -23,8 +23,8 @@ impl IO {
         .map_err(|_| SlightError::ParseNumber(path.to_path_buf()))
     }
 
-    pub fn write_number(path: &Path, value: usize) -> Result<()> {
-        Ok(std::fs::write(path, value.to_string())?)
+    pub fn write_number(out: &mut dyn std::io::Write, value: usize) -> Result<()> {
+        Ok(out.write_all(format!("{}\n", value).as_bytes())?)
     }
 
     pub fn dir(path: &Path) -> Option<&str> {

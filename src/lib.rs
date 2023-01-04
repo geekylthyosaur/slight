@@ -54,6 +54,7 @@ impl Slight {
         Ok(Self {
             device: device.clone(),
             exponent,
+            // TODO unwrap
             input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
             flags,
         })
@@ -63,10 +64,6 @@ impl Slight {
         let curr = self.device.brightness.as_value();
         let max = self.device.brightness.max();
         let range = Self::create_range(curr, &self.input, max, self.exponent);
-        if self.flags.stdout {
-            Self::print_range(range);
-            return Ok(());
-        }
         self.set_brightness_range(range)?;
         Ok(())
     }
@@ -97,22 +94,11 @@ impl Slight {
         if devices.is_empty() {
             return Err(SlightError::NoDevices);
         } else {
-            println!("Found devices:");
             for dev in devices {
-                println!("\t{}", dev);
+                println!("{}", dev);
             }
         }
         Ok(())
-    }
-
-    fn print_range(r: Box<dyn RangeBuilder>) {
-        println!(
-            "{}",
-            r.build()
-                .map(|v| v.to_string())
-                .collect::<Vec<_>>()
-                .join("\n")
-        );
     }
 
     fn create_range(
@@ -140,8 +126,17 @@ impl Slight {
 
     fn set_brightness_range(&mut self, range: Box<dyn RangeBuilder>) -> Result<()> {
         let path = self.device.my_path();
+        let mut out = if self.flags.stdout {
+            Box::new(std::io::stdout()) as Box<dyn std::io::Write>
+        } else {
+            // TODO: creating file here?
+            Box::new(std::fs::File::create(
+                path.join(brightness::CURRENT_BRIGHTNESS_FILENAME),
+            )?) as Box<dyn std::io::Write>
+        };
+
         for v in range.build() {
-            self.device.brightness.set(v, &path)?;
+            self.device.brightness.set(v, out.as_mut())?;
             std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
         }
         Ok(())

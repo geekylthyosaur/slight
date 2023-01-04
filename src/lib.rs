@@ -20,6 +20,7 @@ use crate::{
 };
 
 const EXPONENT_DEFAULT: f32 = 4.0;
+const NO_EXPONENT_DEFAULT: f32 = 1.0;
 // TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
 const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
@@ -31,10 +32,9 @@ pub struct Flags {
 
 pub struct Slight {
     device: Device,
-    exponent: Option<f32>,
+    exponent: f32,
     input: Input,
     io: IO,
-    flags: Flags,
 }
 
 impl Slight {
@@ -48,9 +48,9 @@ impl Slight {
         // TODO: any reasons to pass a reference?
         let device = Self::select_device(&devices, id.as_deref())?;
         let exponent = match exponent {
-            None => None,
-            Some(None) => Some(EXPONENT_DEFAULT),
-            Some(Some(v)) => Some(v),
+            None => NO_EXPONENT_DEFAULT,
+            Some(None) => EXPONENT_DEFAULT,
+            Some(Some(v)) => v,
         };
         let io = if flags.stdout {
             IO::stdout()
@@ -63,7 +63,6 @@ impl Slight {
             // TODO unwrap
             input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
             io,
-            flags,
         })
     }
 
@@ -112,23 +111,15 @@ impl Slight {
         curr: usize,
         input: &Input,
         max: usize,
-        exponent: Option<f32>,
+        exponent: f32,
     ) -> Box<dyn RangeBuilder> {
-        // TODO: Range::try_from(input)?
-        let r = match &input {
-            Input::To(Value::Relative(p)) => Range::new(curr, max).to().relative(*p),
-            Input::To(Value::Absolute(v)) => Range::new(curr, max).to().absolute(*v as isize),
-            Input::By(s, Value::Absolute(v)) => Range::new(curr, max)
-                .by()
-                .absolute((s * *v as f32) as isize),
-            Input::By(s, Value::Relative(p)) => Range::new(curr, max).by().relative(s * *p),
-        };
-
-        if let Some(e) = exponent {
-            Box::new(r.exp(e))
-        } else {
-            Box::new(r)
-        }
+        let r = Range::new(curr, max, exponent);
+        Box::new(match &input {
+            Input::To(Value::Relative(p)) => r.to().relative(*p),
+            Input::To(Value::Absolute(v)) => r.to().absolute(*v as isize),
+            Input::By(s, Value::Absolute(v)) => r.by().absolute((s * *v as f32) as isize),
+            Input::By(s, Value::Relative(p)) => r.by().relative(s * *p),
+        })
     }
 
     fn set_brightness_range(&mut self, range: Box<dyn RangeBuilder>) -> Result<()> {

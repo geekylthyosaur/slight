@@ -60,8 +60,7 @@ impl Slight {
         Ok(Self {
             device: device.clone(),
             exponent,
-            // TODO unwrap
-            input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str()).unwrap(),
+            input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str())?,
             io,
         })
     }

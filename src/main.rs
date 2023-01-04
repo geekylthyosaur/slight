@@ -38,14 +38,14 @@ fn main() {
 
     if let Some(list) = args.list {
         if let Some(id) = list {
-            if let Err(e) = Slight::print_device(id.into()) {
-                eprintln!("{}", e);
-                std::process::exit(1);
-            }
-        } else if let Err(e) = Slight::print_devices() {
+            Slight::print_device(id.into())
+        } else {
+            Slight::print_devices()
+        }
+        .unwrap_or_else(|e| {
             eprintln!("{}", e);
             std::process::exit(1);
-        }
+        });
         return;
     }
 
@@ -62,6 +62,8 @@ fn main() {
         eprintln!("{}", e);
         std::process::exit(1);
     });
-    // TODO: unwrap
-    slight.set_brightness().unwrap();
+    slight.set_brightness().unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        std::process::exit(1);
+    });
 }

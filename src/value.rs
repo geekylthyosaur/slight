@@ -1,3 +1,5 @@
+use crate::error::SlightError;
+
 pub enum Input {
     To(Value),
     By(Sign, Value),
@@ -25,7 +27,7 @@ impl std::ops::Mul<f32> for &Sign {
 }
 
 impl TryFrom<&str> for Input {
-    type Error = ();
+    type Error = SlightError;
     // TODO
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         let mut chars = s.chars().peekable();
@@ -41,28 +43,28 @@ impl TryFrom<&str> for Input {
 }
 
 impl TryFrom<String> for Value {
-    type Error = ();
+    type Error = SlightError;
     // TODO
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let chars = s.split('%').collect::<Vec<_>>();
         if chars.len() == 1 {
-            Ok(Value::Absolute(chars[0].parse::<usize>().unwrap()))
+            Ok(Value::Absolute(chars[0].parse::<usize>().map_err(|_| SlightError::InvalidInput)?))
         } else if chars.len() == 2 {
-            Ok(Value::Relative(chars[0].parse::<f32>().unwrap()))
+            Ok(Value::Relative(chars[0].parse::<f32>().map_err(|_| SlightError::InvalidInput)?))
         } else {
-            Err(())
+            Err(SlightError::InvalidInput)
         }
     }
 }
 
 impl TryFrom<char> for Sign {
-    type Error = ();
+    type Error = SlightError;
     // TODO
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
             '-' => Ok(Self::Minus),
             '+' => Ok(Self::Plus),
-            _ => Err(()),
+            _ => Err(SlightError::InvalidInput),
         }
     }
 }

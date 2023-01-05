@@ -8,7 +8,7 @@ name = "slight"
 path = "src/lib.rs"
 
 [[bin]]
-name = "slight_cli"
+name = "slight"
 path = "src/main.rs"
 
 [dependencies]

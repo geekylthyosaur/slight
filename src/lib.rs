@@ -45,7 +45,6 @@ impl Slight {
         flags: Flags,
     ) -> Result<Self> {
         let devices = Self::scan_devices()?;
-        // TODO: any reasons to pass a reference?
         let device = Self::select_device(&devices, id)?;
         let exponent = match exponent {
             None => NO_EXPONENT_DEFAULT,
@@ -58,9 +57,9 @@ impl Slight {
             IO::new(&device.my_path())?
         };
         Ok(Self {
-            device: device.clone(),
+            device: device.to_owned(),
             exponent,
-            input: Input::try_from(input.as_ref().ok_or(SlightError::NoInput)?.as_str())?,
+            input: Input::try_from(input.map(Cow::from).ok_or(SlightError::NoInput)?)?,
             io,
         })
     }
@@ -68,7 +67,7 @@ impl Slight {
     pub fn set_brightness(&mut self) -> Result<()> {
         let curr = self.device.brightness.as_value();
         let max = self.device.brightness.max();
-        let range = Self::create_range(curr, &self.input, max, self.exponent);
+        let range = Self::create_range(curr, self.input, max, self.exponent);
         self.set_brightness_range(range)?;
         Ok(())
     }
@@ -117,18 +116,13 @@ impl Slight {
         Ok(())
     }
 
-    fn create_range(
-        curr: usize,
-        input: &Input,
-        max: usize,
-        exponent: f32,
-    ) -> Box<dyn RangeBuilder> {
+    fn create_range(curr: usize, input: Input, max: usize, exponent: f32) -> Box<dyn RangeBuilder> {
         let r = Range::new(curr, max, exponent);
-        Box::new(match &input {
-            Input::To(Value::Relative(p)) => r.to().relative(*p),
-            Input::To(Value::Absolute(v)) => r.to().absolute(*v as isize),
-            Input::By(s, Value::Absolute(v)) => r.by().absolute((s * *v as f32) as isize),
-            Input::By(s, Value::Relative(p)) => r.by().relative(s * *p),
+        Box::new(match input {
+            Input::To(Value::Relative(p)) => r.to().relative(p),
+            Input::To(Value::Absolute(v)) => r.to().absolute(v as isize),
+            Input::By(s, Value::Absolute(v)) => r.by().absolute((s * v as f32) as isize),
+            Input::By(s, Value::Relative(p)) => r.by().relative(s * p),
         })
     }
 

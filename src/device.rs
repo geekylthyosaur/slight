@@ -47,7 +47,6 @@ impl PartialEq<&str> for Id {
 impl TryFrom<&Path> for Id {
     type Error = SlightError;
 
-    // TODO: std::result
     fn try_from(p: &Path) -> std::result::Result<Self, Self::Error> {
         match IO::dir(p) {
             Some(s) => Ok(Id(s.to_owned())),

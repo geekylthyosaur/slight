@@ -1,21 +1,26 @@
+use std::borrow::Cow;
+
 use crate::error::SlightError;
 
+#[derive(Clone, Copy)]
 pub enum Input {
     To(Value),
     By(Sign, Value),
 }
 
+#[derive(Clone, Copy)]
 pub enum Value {
     Absolute(usize),
     Relative(f32),
 }
 
+#[derive(Clone, Copy)]
 pub enum Sign {
     Plus,
     Minus,
 }
 
-impl std::ops::Mul<f32> for &Sign {
+impl std::ops::Mul<f32> for Sign {
     type Output = f32;
 
     fn mul(self, f: f32) -> f32 {
@@ -26,40 +31,45 @@ impl std::ops::Mul<f32> for &Sign {
     }
 }
 
-impl TryFrom<&str> for Input {
+impl TryFrom<Cow<'_, str>> for Input {
     type Error = SlightError;
-    // TODO
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
+
+    fn try_from(s: Cow<str>) -> Result<Self, Self::Error> {
         let mut chars = s.chars().peekable();
         if let Some(c) = chars.next_if(|&c| c == '-' || c == '+') {
             Ok(Self::By(
                 Sign::try_from(c)?,
-                Value::try_from(chars.collect::<String>())?,
+                Value::try_from(chars.collect::<Cow<str>>())?,
             ))
         } else {
-            Ok(Self::To(Value::try_from(chars.collect::<String>())?))
+            Ok(Self::To(Value::try_from(chars.collect::<Cow<str>>())?))
         }
     }
 }
 
-impl TryFrom<String> for Value {
+impl TryFrom<Cow<'_, str>> for Value {
     type Error = SlightError;
-    // TODO
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let chars = s.split('%').collect::<Vec<_>>();
-        if chars.len() == 1 {
-            Ok(Value::Absolute(chars[0].parse::<usize>().map_err(|_| SlightError::InvalidInput)?))
-        } else if chars.len() == 2 {
-            Ok(Value::Relative(chars[0].parse::<f32>().map_err(|_| SlightError::InvalidInput)?))
-        } else {
-            Err(SlightError::InvalidInput)
+
+    fn try_from(s: Cow<'_, str>) -> Result<Self, Self::Error> {
+        match s.split('%').count() {
+            1 => Ok(Value::Absolute(
+                s.parse::<usize>().map_err(|_| SlightError::InvalidInput)?,
+            )),
+            2 => Ok(Value::Relative(
+                s.split('%')
+                    .next()
+                    .unwrap()
+                    .parse::<f32>()
+                    .map_err(|_| SlightError::InvalidInput)?,
+            )),
+            _ => Err(SlightError::InvalidInput),
         }
     }
 }
 
 impl TryFrom<char> for Sign {
     type Error = SlightError;
-    // TODO
+
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
             '-' => Ok(Self::Minus),

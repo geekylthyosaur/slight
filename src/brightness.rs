@@ -30,10 +30,6 @@ impl Brightness {
     pub fn as_value(&self) -> usize {
         self.current
     }
-
-    pub fn as_percent(&self) -> usize {
-        ((self.current as f32 / self.max as f32) * 100.0) as usize
-    }
 }
 
 impl TryFrom<&Path> for Brightness {

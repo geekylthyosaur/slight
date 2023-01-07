@@ -16,27 +16,28 @@ impl Range {
         r
     }
 
-    fn by_percent(&self, diff_percent: f32, exponent: f32) -> Box<dyn Iterator<Item = usize> + '_> {
-        let r: Box<dyn Iterator<Item = usize>> = if diff_percent.is_sign_positive() {
+    fn by_percent(&self, diff: f32) -> Box<dyn Iterator<Item = usize> + '_> {
+        let r: Box<dyn Iterator<Item = usize>> = if diff.is_sign_positive() {
             Box::new(
-                Range::exponential(self.max, exponent)
+                self.exponential()
                     .filter(move |&v| v > self.curr)
-                    .take((diff_percent) as usize),
+                    .take((diff) as usize),
             )
         } else {
             Box::new(
-                Range::exponential(self.max, exponent)
+                self.exponential()
                     .filter(move |&v| v < self.curr)
                     .rev()
-                    .take((diff_percent.copysign(1.0)) as usize),
+                    .take((diff.copysign(1.0)) as usize),
             )
         };
         r
     }
 
-    fn exponential(max: usize, exponent: f32) -> Box<dyn DoubleEndedIterator<Item = usize>> {
+    fn exponential(&self) -> Box<dyn DoubleEndedIterator<Item = usize> + '_> {
         Box::new((0..=100).map(move |v: usize| {
-            ((v as f32).powf(exponent) * 100f32.powf(-exponent) * max as f32) as usize
+            ((v as f32).powf(self.exponent) * 100f32.powf(-self.exponent) * self.max as f32)
+                as usize
         }))
     }
 }
@@ -95,7 +96,7 @@ impl RangeBuilder for Value {
                 let new = (r.max as f32 / 100.0 * percent) as usize;
                 r.curr_to_new(new)
             }
-            Value::Relative(percent, Step::By(r)) => r.by_percent(*percent, r.exponent),
+            Value::Relative(percent, Step::By(r)) => r.by_percent(*percent),
         }
     }
 }

@@ -78,12 +78,12 @@ impl Slight {
             let path: PathBuf = class.into();
             IO::scan(&path).map_or_else(
                 //TODO: print only if self.verbose
-                |e| eprintln!("Failed to read class '{}': {}", class, e),
+                |e| eprintln!("Failed to read class '{class}': {e}"),
                 |ids| {
                     for id in ids {
                         Device::new(class, path.join(&id).as_path()).map_or_else(
                             //TODO: print only if self.verbose
-                            |e| eprintln!("Failed to read device '{}': {}", id, e),
+                            |e| eprintln!("Failed to read device '{id}': {e}"),
                             |device| devices.push(device),
                         )
                     }
@@ -99,7 +99,7 @@ impl Slight {
             return Err(SlightError::NoDevices);
         } else {
             for dev in devices {
-                println!("{}", dev);
+                println!("{dev}");
             }
         }
         Ok(())
@@ -111,7 +111,7 @@ impl Slight {
             return Err(SlightError::NoDevices);
         } else {
             let dev = Self::find_device(&devices, id).ok_or(SlightError::NoSpecifiedDeviceFound)?;
-            println!("{}", dev);
+            println!("{dev}");
         }
         Ok(())
     }

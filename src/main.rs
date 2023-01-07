@@ -51,7 +51,7 @@ fn main() {
             Slight::print_devices()
         }
         .unwrap_or_else(|e| {
-            eprintln!("{}", e);
+            eprintln!("{e}");
             std::process::exit(1);
         });
         return;
@@ -67,11 +67,11 @@ fn main() {
         },
     )
     .unwrap_or_else(|e| {
-        eprintln!("{}", e);
+        eprintln!("{e}");
         std::process::exit(1);
     });
     slight.set_brightness().unwrap_or_else(|e| {
-        eprintln!("{}", e);
+        eprintln!("{e}");
         std::process::exit(1);
     });
 }

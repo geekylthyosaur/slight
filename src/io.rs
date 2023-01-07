@@ -45,7 +45,7 @@ impl IO {
     }
 
     pub fn write_number(&mut self, value: usize) -> Result<()> {
-        Ok(self.out.write_all(format!("{}\n", value).as_bytes())?)
+        Ok(self.out.write_all(format!("{value}\n").as_bytes())?)
     }
 
     pub fn dir(path: &Path) -> Option<&str> {

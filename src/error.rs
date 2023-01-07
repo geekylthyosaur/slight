@@ -38,7 +38,7 @@ impl Display for SlightError {
             Self::DeviceBroken(p) => write!(f, "No valid device at {}", p.display()),
             Self::ReadNumber(p, e) => write!(f, "Cannot read {}: {}", p.display(), e),
             Self::ParseNumber(p) => write!(f, "{} has invalid data", p.display()),
-            Self::IO(e) => write!(f, "{}", e),
+            Self::IO(e) => write!(f, "{e}"),
             Self::InvalidInput => write!(f, "Invalid input"),
             Self::NoInput => write!(f, "No input was provided!"),
             Self::NoDevices => write!(f, "No devices found!"),

@@ -10,7 +10,7 @@ pub struct IO {
 }
 
 impl IO {
-    pub fn new(path: &Path) -> Result<Self> {
+    pub fn file(path: &Path) -> Result<Self> {
         Ok(Self {
             out: Box::new(std::fs::File::create(
                 path.join(CURRENT_BRIGHTNESS_FILENAME),
@@ -26,13 +26,12 @@ impl IO {
 }
 
 impl IO {
-    pub fn scan(path: &Path) -> Result<Vec<String>> {
-        Ok(path.read_dir().map(|v| {
+    pub fn scan(path: &Path) -> Result<Box<impl Iterator<Item = String>>> {
+        Ok(Box::new(path.read_dir().map(|v| {
             v.filter_map(|v| v.ok())
                 .map(|v| v.file_name().into_string())
                 .filter_map(|v| v.ok())
-                .collect()
-        })?)
+        })?))
     }
 
     pub fn read_number(path: &Path) -> Result<usize> {

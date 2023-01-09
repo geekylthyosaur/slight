@@ -86,6 +86,8 @@ impl Step {
 
 impl RangeBuilder for Value {
     fn build(&self) -> Box<dyn Iterator<Item = usize> + '_> {
+        // TODO dedup ends
+        // 2 2 1 1 1 1 0 0 0 0 0 0 0 0 -> 2 2 1 1 1 1 0
         match self {
             Value::Absolute(new, Step::To(r)) => r.curr_to_new(*new as usize),
             Value::Absolute(v, Step::By(r)) => {

@@ -54,7 +54,7 @@ impl Slight {
         let io = if flags.stdout {
             IO::stdout()
         } else {
-            IO::new(&device.my_path())?
+            IO::file(&device.my_path())?
         };
         Ok(Self {
             device: device.to_owned(),

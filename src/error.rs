@@ -16,8 +16,8 @@ pub enum SlightError {
     InvalidInput,
     NoInput,
     NoDevices,
-    NoSuitableDeviceFound,
-    NoSpecifiedDeviceFound,
+    SuitableDeviceNotFound,
+    SpecifiedDeviceNotFound,
 }
 
 impl From<&Path> for SlightError {
@@ -42,8 +42,8 @@ impl Display for SlightError {
             Self::InvalidInput => write!(f, "Invalid input"),
             Self::NoInput => write!(f, "No input was provided!"),
             Self::NoDevices => write!(f, "No devices found!"),
-            Self::NoSuitableDeviceFound => write!(f, "No suitable device found!"),
-            Self::NoSpecifiedDeviceFound => write!(f, "No specified device found!"),
+            Self::SuitableDeviceNotFound => write!(f, "No suitable device found!"),
+            Self::SpecifiedDeviceNotFound => write!(f, "The specified device was not found!"),
         }
     }
 }

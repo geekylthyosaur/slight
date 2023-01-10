@@ -110,7 +110,7 @@ impl Slight {
         if devices.is_empty() {
             return Err(SlightError::NoDevices);
         } else {
-            let dev = Self::find_device(&devices, id).ok_or(SlightError::NoSpecifiedDeviceFound)?;
+            let dev = Self::find_device(&devices, id).ok_or(SlightError::SpecifiedDeviceNotFound)?;
             println!("{dev}");
         }
         Ok(())
@@ -136,9 +136,9 @@ impl Slight {
 
     fn select_device<'a>(devices: &'a [Device], id: Option<Cow<str>>) -> Result<&'a Device> {
         if let Some(id) = id {
-            Self::find_device(devices, id).ok_or(SlightError::NoSpecifiedDeviceFound)
+            Self::find_device(devices, id).ok_or(SlightError::SpecifiedDeviceNotFound)
         } else {
-            Self::default_device(devices).ok_or(SlightError::NoSuitableDeviceFound)
+            Self::default_device(devices).ok_or(SlightError::SuitableDeviceNotFound)
         }
     }
 

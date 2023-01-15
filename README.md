@@ -1,13 +1,14 @@
 # slight
+
 Linux utility to control backlight brightness smoothly.
 
-# Build
+## Build
 1. [Install rustc & cargo](https://www.rust-lang.org/tools/install).
 2. Clone this repository `git clone https://github.com/geekylthyosaur/slight.git`.
 3. Build using `cargo build --release`.
 4. Grab binary from `target/release/slight`.
 
-# Usage
+## Usage
 ```
 USAGE:
     slight [OPTIONS] [INPUT]

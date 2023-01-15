@@ -19,13 +19,13 @@ impl Range {
         if diff.is_sign_positive() {
             Box::new(
                 self.exponential()
-                    .filter(move |&v| v > self.curr)
+                    .filter(|&v| v > self.curr)
                     .take((diff) as usize),
             )
         } else {
             Box::new(
                 self.exponential()
-                    .filter(move |&v| v < self.curr)
+                    .filter(|&v| v < self.curr)
                     .rev()
                     .take((diff.copysign(1.0)) as usize),
             )
@@ -33,7 +33,7 @@ impl Range {
     }
 
     fn exponential(&self) -> Box<dyn DoubleEndedIterator<Item = usize> + '_> {
-        Box::new((0..=100).map(move |v: usize| {
+        Box::new((0..=100).map(|v: usize| {
             ((v as f32).powf(self.exponent) * 100f32.powf(-self.exponent) * self.max as f32)
                 as usize
         }))

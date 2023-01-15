@@ -8,16 +8,15 @@ pub struct Range {
 
 impl Range {
     fn curr_to_new(&self, new: usize) -> Box<dyn Iterator<Item = usize>> {
-        let r: Box<dyn Iterator<Item = usize>> = match new.cmp(&self.curr) {
+        match new.cmp(&self.curr) {
             Ordering::Greater => Box::new(self.curr..=new),
             Ordering::Less => Box::new((new..=self.curr).rev()),
             Ordering::Equal => Box::new(std::iter::empty()),
-        };
-        r
+        }
     }
 
     fn by_percent(&self, diff: f32) -> Box<dyn Iterator<Item = usize> + '_> {
-        let r: Box<dyn Iterator<Item = usize>> = if diff.is_sign_positive() {
+        if diff.is_sign_positive() {
             Box::new(
                 self.exponential()
                     .filter(move |&v| v > self.curr)
@@ -30,8 +29,7 @@ impl Range {
                     .rev()
                     .take((diff.copysign(1.0)) as usize),
             )
-        };
-        r
+        }
     }
 
     fn exponential(&self) -> Box<dyn DoubleEndedIterator<Item = usize> + '_> {

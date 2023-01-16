@@ -1,3 +1,5 @@
+use crate::error::{Result, SlightError};
+use std::borrow::Cow;
 use std::cmp::Ordering;
 
 pub struct Range {
@@ -7,6 +9,40 @@ pub struct Range {
 }
 
 impl Range {
+    pub fn try_from_input(
+        s: Cow<str>,
+        curr: usize,
+        max: usize,
+        exponent: f32,
+    ) -> Result<Box<dyn RangeBuilder>> {
+        let r = Range::new(curr, max, exponent);
+        let mut chars = s.chars().peekable();
+
+        let sign;
+        let r = if chars.next_if_eq(&'-').is_some() {
+            sign = -1.0;
+            r.by()
+        } else if chars.next_if_eq(&'+').is_some() {
+            sign = 1.0;
+            r.by()
+        } else {
+            sign = 1.0;
+            r.to()
+        };
+
+        let s = chars
+            .clone()
+            .take_while(|&c| c != '%')
+            .collect::<Cow<str>>();
+        let r = if let Some('%') = chars.last() {
+            r.relative(sign * s.parse::<f32>().map_err(|_| SlightError::InvalidInput)?)
+        } else {
+            r.absolute(sign * s.parse::<f32>().map_err(|_| SlightError::InvalidInput)?)
+        };
+
+        Ok(Box::new(r))
+    }
+
     fn curr_to_new(&self, new: usize) -> Box<dyn Iterator<Item = usize>> {
         match new.cmp(&self.curr) {
             Ordering::Greater => Box::new(self.curr..=new),
@@ -46,7 +82,7 @@ pub enum Step {
 }
 
 pub enum Value {
-    Absolute(isize, Step),
+    Absolute(f32, Step),
     Relative(f32, Step),
 }
 
@@ -73,7 +109,7 @@ impl Range {
 }
 
 impl Step {
-    pub fn absolute(self, v: isize) -> Value {
+    pub fn absolute(self, v: f32) -> Value {
         Value::Absolute(v, self)
     }
 
@@ -89,7 +125,7 @@ impl RangeBuilder for Value {
         match self {
             Value::Absolute(new, Step::To(r)) => r.curr_to_new(*new as usize),
             Value::Absolute(v, Step::By(r)) => {
-                let new = (r.curr as isize).checked_add(*v).unwrap_or(0) as usize;
+                let new = (r.curr as isize).checked_add(*v as isize).unwrap_or(0) as usize;
                 r.curr_to_new(new)
             }
             Value::Relative(percent, Step::To(r)) => {

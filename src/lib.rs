@@ -4,7 +4,6 @@ mod device;
 mod error;
 mod io;
 mod range;
-mod value;
 
 use strum::IntoEnumIterator;
 
@@ -16,7 +15,6 @@ use crate::{
     error::{Result, SlightError},
     io::IO,
     range::{Range, RangeBuilder},
-    value::{Input, Value},
 };
 
 const EXPONENT_DEFAULT: f32 = 4.0;
@@ -32,8 +30,7 @@ pub struct Flags {
 
 pub struct Slight {
     device: Device,
-    exponent: f32,
-    input: Input,
+    range: Option<Box<dyn RangeBuilder>>,
     io: IO,
 }
 
@@ -41,11 +38,11 @@ impl Slight {
     pub fn new(
         id: Option<Cow<str>>,
         exponent: Option<Option<f32>>,
-        input: Option<String>,
+        input: Option<Cow<str>>,
         flags: Flags,
     ) -> Result<Self> {
         let devices = Self::scan_devices()?;
-        let device = Self::select_device(&devices, id)?;
+        let device = Self::select_device(&devices, id)?.to_owned();
         let exponent = match exponent {
             None => NO_EXPONENT_DEFAULT,
             Some(None) => EXPONENT_DEFAULT,
@@ -56,20 +53,14 @@ impl Slight {
         } else {
             IO::file(&device.my_path())?
         };
-        Ok(Self {
-            device: device.to_owned(),
-            exponent,
-            input: Input::try_from(input.map(Cow::from).ok_or(SlightError::NoInput)?)?,
-            io,
-        })
-    }
-
-    pub fn set_brightness(&mut self) -> Result<()> {
-        let curr = self.device.brightness.as_value();
-        let max = self.device.brightness.max();
-        let range = Self::create_range(curr, self.input, max, self.exponent);
-        self.set_brightness_range(range)?;
-        Ok(())
+        let range = if let Some(input) = input {
+            let curr = device.brightness.as_value();
+            let max = device.brightness.max();
+            Some(Range::try_from_input(input, curr, max, exponent)?)
+        } else {
+            None
+        };
+        Ok(Self { device, range, io })
     }
 
     fn scan_devices() -> Result<Vec<Device>> {
@@ -110,26 +101,19 @@ impl Slight {
         if devices.is_empty() {
             return Err(SlightError::NoDevices);
         } else {
-            let dev = Self::find_device(&devices, id).ok_or(SlightError::SpecifiedDeviceNotFound)?;
+            let dev =
+                Self::find_device(&devices, id).ok_or(SlightError::SpecifiedDeviceNotFound)?;
             println!("{dev}");
         }
         Ok(())
     }
 
-    fn create_range(curr: usize, input: Input, max: usize, exponent: f32) -> Box<dyn RangeBuilder> {
-        let r = Range::new(curr, max, exponent);
-        Box::new(match input {
-            Input::To(Value::Relative(p)) => r.to().relative(p),
-            Input::To(Value::Absolute(v)) => r.to().absolute(v as isize),
-            Input::By(s, Value::Absolute(v)) => r.by().absolute((s * v as f32) as isize),
-            Input::By(s, Value::Relative(p)) => r.by().relative(s * p),
-        })
-    }
-
-    fn set_brightness_range(&mut self, range: Box<dyn RangeBuilder>) -> Result<()> {
-        for v in range.build() {
-            self.device.brightness.set(v, &mut self.io)?;
-            std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
+    pub fn set_brightness(&mut self) -> Result<()> {
+        if self.range.is_some() {
+            for v in self.range.as_ref().unwrap().build() {
+                self.device.brightness.set(v, &mut self.io)?;
+                std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
+            }
         }
         Ok(())
     }

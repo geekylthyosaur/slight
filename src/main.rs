@@ -60,7 +60,7 @@ fn main() {
     let mut slight = Slight::new(
         args.id.map(Cow::from),
         args.exponent,
-        args.input,
+        args.input.map(Cow::from),
         Flags {
             stdout: args.stdout,
             ..Flags::default()

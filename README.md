@@ -17,9 +17,9 @@ ARGS:
     <INPUT>
             Input string to control backlight brightness:
               - set exact absolute brightness value: `n`;
-              - increase/decrease current brightness by absolute value: `+n`/`-n`;
+              - increase/decrease current brightness by absolute value: `+n` or `-n`;
               - set exact relative brightness value: `n%`;
-              - increase/decrease current brightness by relative value: `+n%`/`-n%`.
+              - increase/decrease current brightness by relative value: `+n%` or `-n%`.
 
 OPTIONS:
     -e, --exponent [<EXPONENT>]

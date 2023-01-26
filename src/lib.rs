@@ -31,7 +31,7 @@ pub struct Flags {
 pub struct Slight {
     device: Device,
     range: Option<Box<dyn RangeBuilder>>,
-    io: IO,
+    flags: Flags,
 }
 
 impl Slight {
@@ -48,11 +48,6 @@ impl Slight {
             Some(None) => EXPONENT_DEFAULT,
             Some(Some(v)) => v,
         };
-        let io = if flags.stdout {
-            IO::stdout()
-        } else {
-            IO::file(&device.my_path())?
-        };
         let range = if let Some(input) = input {
             let curr = device.brightness.as_value();
             let max = device.brightness.max();
@@ -60,7 +55,7 @@ impl Slight {
         } else {
             None
         };
-        Ok(Self { device, range, io })
+        Ok(Self { device, range, flags })
     }
 
     fn scan_devices() -> Result<Vec<Device>> {
@@ -109,9 +104,14 @@ impl Slight {
     }
 
     pub fn set_brightness(&mut self) -> Result<()> {
+        let mut io = if self.flags.stdout {
+            IO::stdout()
+        } else {
+            IO::file(&self.device.my_path())?
+        };
         if self.range.is_some() {
             for v in self.range.as_ref().unwrap().build() {
-                self.device.brightness.set(v, &mut self.io)?;
+                self.device.brightness.set(v, &mut io)?;
                 std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
             }
         }

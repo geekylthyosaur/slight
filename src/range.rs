@@ -9,38 +9,38 @@ pub struct Range {
 }
 
 impl Range {
-    pub fn try_from_input(
-        s: Cow<str>,
-        curr: usize,
-        max: usize,
-        exponent: f32,
-    ) -> Result<Box<dyn RangeBuilder>> {
-        let r = Range::new(curr, max, exponent);
+    pub fn new(curr: usize, max: usize, exponent: f32) -> Self {
+        Self {
+            curr,
+            max,
+            exponent,
+        }
+    }
+
+    pub fn try_from_input(self, s: Cow<str>) -> Result<Box<dyn RangeBuilder>> {
         let mut chars = s.chars().peekable();
 
         let sign;
         let r = if chars.next_if_eq(&'-').is_some() {
             sign = -1.0;
-            r.by()
+            self.by()
         } else if chars.next_if_eq(&'+').is_some() {
             sign = 1.0;
-            r.by()
+            self.by()
         } else {
             sign = 1.0;
-            r.to()
+            self.to()
         };
 
         let s = chars
             .clone()
             .take_while(|&c| c != '%')
             .collect::<Cow<str>>();
-        let r = if let Some('%') = chars.last() {
+        Ok(Box::new(if let Some('%') = chars.last() {
             r.relative(sign * s.parse::<f32>().map_err(|_| SlightError::InvalidInput)?)
         } else {
             r.absolute(sign * s.parse::<f32>().map_err(|_| SlightError::InvalidInput)?)
-        };
-
-        Ok(Box::new(r))
+        }))
     }
 
     fn curr_to_new(&self, new: usize) -> Box<dyn Iterator<Item = usize>> {
@@ -91,14 +91,6 @@ pub trait RangeBuilder {
 }
 
 impl Range {
-    pub fn new(curr: usize, max: usize, exponent: f32) -> Self {
-        Self {
-            curr,
-            max,
-            exponent,
-        }
-    }
-
     pub fn to(self) -> Step {
         Step::To(self)
     }

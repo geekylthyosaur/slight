@@ -51,11 +51,16 @@ impl Slight {
         let range = if let Some(input) = input {
             let curr = device.brightness.as_value();
             let max = device.brightness.max();
-            Some(Range::try_from_input(input, curr, max, exponent)?)
+            let r = Range::new(curr, max, exponent);
+            Some(r.try_from_input(input)?)
         } else {
             None
         };
-        Ok(Self { device, range, flags })
+        Ok(Self {
+            device,
+            range,
+            flags,
+        })
     }
 
     fn scan_devices() -> Result<Vec<Device>> {

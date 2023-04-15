@@ -5,6 +5,7 @@ mod error;
 mod io;
 mod range;
 
+use device::Toggle;
 use strum::IntoEnumIterator;
 
 use std::{borrow::Cow, path::PathBuf};
@@ -25,6 +26,7 @@ const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 #[derive(Default)]
 pub struct Flags {
     pub stdout: bool,
+    pub toggle: bool,
     pub verbose: bool,
 }
 
@@ -108,12 +110,18 @@ impl Slight {
         Ok(())
     }
 
-    pub fn set_brightness(&mut self) -> Result<()> {
+    pub fn set_brightness(mut self) -> Result<()> {
         let mut io = if self.flags.stdout {
             IO::stdout()
         } else {
             IO::file(&self.device.my_path())?
         };
+
+        if self.flags.toggle {
+            self.device.toggle(&mut io)?;
+            return Ok(());
+        }
+
         if self.range.is_some() {
             for v in self.range.as_ref().unwrap().build() {
                 self.device.brightness.set(v, &mut io)?;

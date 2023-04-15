@@ -36,6 +36,10 @@ pub struct Args {
     #[clap(short, long)]
     stdout: bool,
 
+    /// Toggle value of device with only two values (0/1)
+    #[clap(short, long)]
+    toggle: bool,
+
     /// Being verbose about what is going on
     #[clap(short, long)]
     verbose: bool,
@@ -57,12 +61,13 @@ fn main() {
         return;
     }
 
-    let mut slight = Slight::new(
+    let slight = Slight::new(
         args.id.map(Cow::from),
         args.exponent,
         args.input.map(Cow::from),
         Flags {
             stdout: args.stdout,
+            toggle: args.toggle,
             ..Flags::default()
         },
     )

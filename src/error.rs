@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::device::Device;
+
 type IOError = std::io::Error;
 
 pub type Result<T> = std::result::Result<T, SlightError>;
@@ -14,6 +16,7 @@ pub enum SlightError {
     ParseNumber(PathBuf),
     IO(IOError),
     InvalidInput,
+    CannotToggle(Device),
     NoInput,
     NoDevices,
     SuitableDeviceNotFound,
@@ -40,6 +43,13 @@ impl Display for SlightError {
             Self::ParseNumber(p) => write!(f, "{} has invalid data", p.display()),
             Self::IO(e) => write!(f, "{e}"),
             Self::InvalidInput => write!(f, "Invalid input"),
+            Self::CannotToggle(d) => write!(
+                f,
+                "Cannot toggle '{}' as it can have more than two values ({}/{})",
+                d.id,
+                d.brightness.as_value(),
+                d.brightness.max()
+            ),
             Self::NoInput => write!(f, "No input was provided!"),
             Self::NoDevices => write!(f, "No devices found!"),
             Self::SuitableDeviceNotFound => write!(f, "No suitable device found!"),

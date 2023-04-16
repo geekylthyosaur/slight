@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use crate::{
     brightness::Brightness,
     class::Class,
-    error::{Result, SlightError},
+    error::{Error, Result},
     io::IO,
 };
 
@@ -30,7 +30,11 @@ impl Toggle for Device {
             let new = self.brightness.as_value() ^ 1;
             self.brightness.set(new, io)
         } else {
-            Err(SlightError::CannotToggle(self))
+            Err(Error::CannotToggle {
+                id: self.id.to_string(),
+                curr: self.brightness.as_value(),
+                max: self.brightness.max(),
+            })
         }
     }
 }
@@ -65,9 +69,9 @@ impl PartialEq<&str> for Id {
 }
 
 impl TryFrom<&Path> for Id {
-    type Error = SlightError;
+    type Error = Error;
 
-    fn try_from(p: &Path) -> std::result::Result<Self, Self::Error> {
+    fn try_from(p: &Path) -> Result<Self> {
         match IO::dir(p) {
             Some(s) => Ok(Id(s.to_owned())),
             None => Err(p.into()),

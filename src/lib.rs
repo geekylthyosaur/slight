@@ -13,7 +13,7 @@ use std::{borrow::Cow, path::PathBuf};
 use crate::{
     class::Class,
     device::Device,
-    error::{Result, SlightError},
+    error::{Error, Result},
     io::IO,
     range::{Range, RangeBuilder},
 };
@@ -89,7 +89,7 @@ impl Slight {
     pub fn print_devices() -> Result<()> {
         let devices = Self::scan_devices()?;
         if devices.is_empty() {
-            return Err(SlightError::NoDevices);
+            return Err(Error::NoDevices);
         } else {
             for dev in devices {
                 println!("{dev}");
@@ -101,10 +101,9 @@ impl Slight {
     pub fn print_device(id: Cow<str>) -> Result<()> {
         let devices = Self::scan_devices()?;
         if devices.is_empty() {
-            return Err(SlightError::NoDevices);
+            return Err(Error::NoDevices);
         } else {
-            let dev =
-                Self::find_device(&devices, id).ok_or(SlightError::SpecifiedDeviceNotFound)?;
+            let dev = Self::find_device(&devices, id).ok_or(Error::SpecifiedDeviceNotFound)?;
             println!("{dev}");
         }
         Ok(())
@@ -133,9 +132,9 @@ impl Slight {
 
     fn select_device<'a>(devices: &'a [Device], id: Option<Cow<str>>) -> Result<&'a Device> {
         if let Some(id) = id {
-            Self::find_device(devices, id).ok_or(SlightError::SpecifiedDeviceNotFound)
+            Self::find_device(devices, id).ok_or(Error::SpecifiedDeviceNotFound)
         } else {
-            Self::default_device(devices).ok_or(SlightError::SuitableDeviceNotFound)
+            Self::default_device(devices).ok_or(Error::SuitableDeviceNotFound)
         }
     }
 

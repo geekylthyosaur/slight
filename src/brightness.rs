@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
 
 use crate::{
-    error::{Result, SlightError},
+    error::{Error, Result},
     io::IO,
 };
 
@@ -33,9 +33,9 @@ impl Brightness {
 }
 
 impl TryFrom<&Path> for Brightness {
-    type Error = SlightError;
+    type Error = Error;
 
-    fn try_from(p: &Path) -> std::result::Result<Self, Self::Error> {
+    fn try_from(p: &Path) -> Result<Self> {
         Ok(Self {
             current: IO::read_number(&p.join(CURRENT_BRIGHTNESS_FILENAME))?,
             max: IO::read_number(&p.join(MAX_BRIGHTNESS_FILENAME))?,

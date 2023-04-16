@@ -1,59 +1,35 @@
-use std::{
-    fmt::{Display, Formatter, Result as FmtResult},
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
-use crate::device::Device;
+use thiserror::Error;
 
-type IOError = std::io::Error;
+pub type Result<T> = std::result::Result<T, Error>;
 
-pub type Result<T> = std::result::Result<T, SlightError>;
-
-#[derive(Debug)]
-pub enum SlightError {
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("No valid device at {0}!")]
     DeviceBroken(PathBuf),
-    ReadNumber(PathBuf, IOError),
+    #[error("Cannot read {0}: {1}!")]
+    ReadNumber(PathBuf, std::io::Error),
+    #[error("{0} has invalid data!")]
     ParseNumber(PathBuf),
-    IO(IOError),
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
+    #[error("Invalid input!")]
     InvalidInput,
-    CannotToggle(Device),
+    #[error("Cannot toggle '{id}' as it can have more than two values ({curr}/{max})!")]
+    CannotToggle { id: String, curr: usize, max: usize },
+    #[error("No input was provided!")]
     NoInput,
+    #[error("No devices found!")]
     NoDevices,
+    #[error("No suitable device found!")]
     SuitableDeviceNotFound,
+    #[error("The specified device was not found!")]
     SpecifiedDeviceNotFound,
 }
 
-impl From<&Path> for SlightError {
+impl From<&Path> for Error {
     fn from(p: &Path) -> Self {
         Self::DeviceBroken(p.to_path_buf())
-    }
-}
-
-impl From<IOError> for SlightError {
-    fn from(e: IOError) -> Self {
-        Self::IO(e)
-    }
-}
-
-impl Display for SlightError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        match self {
-            Self::DeviceBroken(p) => write!(f, "No valid device at {}", p.display()),
-            Self::ReadNumber(p, e) => write!(f, "Cannot read {}: {}", p.display(), e),
-            Self::ParseNumber(p) => write!(f, "{} has invalid data", p.display()),
-            Self::IO(e) => write!(f, "{e}"),
-            Self::InvalidInput => write!(f, "Invalid input"),
-            Self::CannotToggle(d) => write!(
-                f,
-                "Cannot toggle '{}' as it can have more than two values ({}/{})",
-                d.id,
-                d.brightness.as_value(),
-                d.brightness.max()
-            ),
-            Self::NoInput => write!(f, "No input was provided!"),
-            Self::NoDevices => write!(f, "No devices found!"),
-            Self::SuitableDeviceNotFound => write!(f, "No suitable device found!"),
-            Self::SpecifiedDeviceNotFound => write!(f, "The specified device was not found!"),
-        }
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     brightness::CURRENT_BRIGHTNESS_FILENAME,
-    error::{Result, SlightError},
+    error::{Error, Result},
 };
 
 use std::path::Path;
@@ -36,11 +36,11 @@ impl IO {
 
     pub fn read_number(path: &Path) -> Result<usize> {
         String::from_utf8_lossy(
-            &std::fs::read(path).map_err(|e| SlightError::ReadNumber(path.to_path_buf(), e))?,
+            &std::fs::read(path).map_err(|e| Error::ReadNumber(path.to_path_buf(), e))?,
         )
         .trim()
         .parse::<usize>()
-        .map_err(|_| SlightError::ParseNumber(path.to_path_buf()))
+        .map_err(|_| Error::ParseNumber(path.to_path_buf()))
     }
 
     pub fn write_number(&mut self, value: usize) -> Result<()> {

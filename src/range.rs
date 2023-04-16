@@ -1,4 +1,4 @@
-use crate::error::{Result, SlightError};
+use crate::error::{Error, Result};
 use std::borrow::Cow;
 use std::cmp::Ordering;
 
@@ -37,9 +37,9 @@ impl Range {
             .take_while(|&c| c != '%')
             .collect::<Cow<str>>();
         Ok(Box::new(if let Some('%') = chars.last() {
-            r.relative(sign * s.parse::<f32>().map_err(|_| SlightError::InvalidInput)?)
+            r.relative(sign * s.parse::<f32>().map_err(|_| Error::InvalidInput)?)
         } else {
-            r.absolute(sign * s.parse::<f32>().map_err(|_| SlightError::InvalidInput)?)
+            r.absolute(sign * s.parse::<f32>().map_err(|_| Error::InvalidInput)?)
         }))
     }
 

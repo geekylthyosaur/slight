@@ -12,8 +12,8 @@ impl Range {
     pub fn new(curr: usize, max: usize, exponent: f32) -> Self {
         Self {
             curr,
-            max,
             exponent,
+            max,
         }
     }
 
@@ -56,14 +56,14 @@ impl Range {
             Box::new(
                 self.exponential()
                     .filter(|&v| v > self.curr)
-                    .take((diff) as usize),
+                    .take(diff as usize),
             )
         } else {
             Box::new(
                 self.exponential()
                     .filter(|&v| v < self.curr)
                     .rev()
-                    .take((diff.copysign(1.0)) as usize),
+                    .take((diff.abs()) as usize),
             )
         }
     }

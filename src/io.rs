@@ -28,9 +28,9 @@ impl IO {
 impl IO {
     pub fn scan(path: &Path) -> Result<Box<impl Iterator<Item = String>>> {
         Ok(Box::new(path.read_dir().map(|v| {
-            v.filter_map(|v| v.ok())
+            v.filter_map(std::result::Result::ok)
                 .map(|v| v.file_name().into_string())
-                .filter_map(|v| v.ok())
+                .filter_map(std::result::Result::ok)
         })?))
     }
 

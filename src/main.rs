@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use slight::{Flags, Slight};
 
 use clap::Parser;
@@ -62,9 +60,9 @@ fn main() {
     }
 
     let slight = Slight::new(
-        args.id.map(Cow::from),
+        args.id,
         args.exponent,
-        args.input.map(Cow::from),
+        args.input,
         Flags {
             stdout: args.stdout,
             toggle: args.toggle,

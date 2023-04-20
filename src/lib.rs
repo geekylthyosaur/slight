@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 mod brightness;
 mod class;
 mod device;
@@ -18,15 +19,21 @@ use crate::{
     range::{Range, RangeBuilder},
 };
 
+/// Default value for exponent when using `--exponent` flag without given value
 const EXPONENT_DEFAULT: f32 = 4.0;
+/// Default value for exponent when `--exponent` flag was not provided
 const NO_EXPONENT_DEFAULT: f32 = 1.0;
 // TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
+/// Default time interval between brightness changes
 const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
 #[derive(Default)]
 pub struct Flags {
+    /// Write to `stdout` instead of `sysfs`
     pub stdout: bool,
+    /// Toggle value of device with only two values (0/1)
     pub toggle: bool,
+    /// Being verbose about what is going on
     pub verbose: bool,
 }
 
@@ -38,13 +45,15 @@ pub struct Slight {
 
 impl Slight {
     pub fn new(
-        id: Option<Cow<str>>,
+        id: impl Into<Option<String>>,
         exponent: Option<Option<f32>>,
-        input: Option<Cow<str>>,
+        input: impl Into<Option<String>>,
         flags: Flags,
     ) -> Result<Self> {
-        let devices = Self::scan_devices()?;
-        let device = Self::select_device(&devices, id)?.to_owned();
+        let id = id.into();
+        let input = input.into();
+        let devices = Self::scan_devices();
+        let device = Self::select_device(&devices, id.map(Cow::from))?.clone();
         let exponent = match exponent {
             None => NO_EXPONENT_DEFAULT,
             Some(None) => EXPONENT_DEFAULT,
@@ -54,7 +63,7 @@ impl Slight {
             let curr = device.brightness.as_value();
             let max = device.brightness.max();
             let r = Range::new(curr, max, exponent);
-            Some(r.try_from_input(input)?)
+            Some(r.try_from_input(input.into())?)
         } else {
             None
         };
@@ -65,7 +74,7 @@ impl Slight {
         })
     }
 
-    fn scan_devices() -> Result<Vec<Device>> {
+    fn scan_devices() -> Vec<Device> {
         let mut devices = Vec::new();
         Class::iter().for_each(|class| {
             let path: PathBuf = class.into();
@@ -78,37 +87,44 @@ impl Slight {
                             //TODO: print only if self.verbose
                             |e| eprintln!("Failed to read device '{id}': {e}"),
                             |device| devices.push(device),
-                        )
+                        );
                     }
                 },
-            )
+            );
         });
-        Ok(devices)
+        devices
     }
 
+    /// Print all available devices
     pub fn print_devices() -> Result<()> {
-        let devices = Self::scan_devices()?;
-        if devices.is_empty() {
-            return Err(Error::NoDevices);
-        } else {
-            for dev in devices {
-                println!("{dev}");
-            }
-        }
-        Ok(())
-    }
+        let devices = Self::scan_devices();
 
-    pub fn print_device(id: Cow<str>) -> Result<()> {
-        let devices = Self::scan_devices()?;
         if devices.is_empty() {
             return Err(Error::NoDevices);
-        } else {
-            let dev = Self::find_device(&devices, id).ok_or(Error::SpecifiedDeviceNotFound)?;
+        }
+
+        for dev in devices {
             println!("{dev}");
         }
+        
         Ok(())
     }
 
+    /// Print device with given `id` if it exists
+    pub fn print_device(id: Cow<str>) -> Result<()> {
+        let devices = Self::scan_devices();
+
+        if devices.is_empty() {
+            return Err(Error::NoDevices);
+        }
+
+        let dev = Self::find_device(&devices, id).ok_or(Error::SpecifiedDeviceNotFound)?;
+        println!("{dev}");
+
+        Ok(())
+    }
+
+    /// Set brightness of device
     pub fn set_brightness(mut self) -> Result<()> {
         let mut io = if self.flags.stdout {
             IO::stdout()

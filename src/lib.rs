@@ -106,7 +106,7 @@ impl Slight {
         for dev in devices {
             println!("{dev}");
         }
-        
+
         Ok(())
     }
 
@@ -129,7 +129,10 @@ impl Slight {
         let mut io = if self.flags.stdout {
             IO::stdout()
         } else {
-            IO::file(&self.device.my_path())?
+            let path = &self.device.my_path();
+            // TODO: show instructions
+            IO::check_write_permissions(path)?;
+            IO::file(path)?
         };
 
         if self.flags.toggle {

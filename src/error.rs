@@ -26,6 +26,8 @@ pub enum Error {
     SuitableDeviceNotFound,
     #[error("The specified device was not found!")]
     SpecifiedDeviceNotFound,
+    #[error("Missing write permissions for sysfs!")]
+    Permission,
 }
 
 impl From<&Path> for Error {

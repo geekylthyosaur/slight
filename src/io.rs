@@ -50,4 +50,10 @@ impl IO {
     pub fn dir(path: &Path) -> Option<&str> {
         path.is_dir().then_some(path.file_name()?.to_str()?)
     }
+
+    pub fn check_write_permissions(path: &Path) -> Result<()> {
+        (std::fs::metadata(path)?.permissions().readonly())
+            .then_some(())
+            .ok_or(Error::Permission)
+    }
 }

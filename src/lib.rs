@@ -52,7 +52,10 @@ impl Slight {
     ) -> Result<Self> {
         let id = id.into();
         let input = input.into();
-        let devices = Self::scan_devices();
+        let devices = Self::scan_devices()?
+            .into_iter()
+            .map(|d| d.unwrap()) // TODO: error hangling
+            .collect::<Vec<_>>();
         let device = Self::select_device(&devices, id.map(Cow::from))?.clone();
         let exponent = match exponent {
             None => NO_EXPONENT_DEFAULT,
@@ -74,30 +77,28 @@ impl Slight {
         })
     }
 
-    fn scan_devices() -> Vec<Device> {
-        let mut devices = Vec::new();
-        Class::iter().for_each(|class| {
-            let path: PathBuf = class.into();
-            IO::scan(&path).map_or_else(
-                //TODO: print only if self.verbose
-                |e| eprintln!("Failed to read class '{class}': {e}"),
-                |ids| {
-                    for id in ids {
-                        Device::new(class, path.join(&id).as_path()).map_or_else(
-                            //TODO: print only if self.verbose
-                            |e| eprintln!("Failed to read device '{id}': {e}"),
-                            |device| devices.push(device),
-                        );
-                    }
-                },
-            );
-        });
-        devices
+    fn scan_devices() -> Result<Vec<Result<Device>>> {
+        Ok(Class::iter()
+            .flat_map(|class| {
+                let path = PathBuf::from(class);
+                IO::scan(path.as_path()).map(|ids| {
+                    ids.map(|id| {
+                        let path = path.join(id);
+                        Device::new(class, path.as_path())
+                    })
+                    .collect::<Vec<_>>()
+                })
+            })
+            .flatten()
+            .collect())
     }
 
     /// Print all available devices
     pub fn print_devices() -> Result<()> {
-        let devices = Self::scan_devices();
+        let devices = Self::scan_devices()?
+            .into_iter()
+            .map(|d| d.unwrap()) // TODO: error hangling
+            .collect::<Vec<_>>();
 
         if devices.is_empty() {
             return Err(Error::NoDevices);
@@ -112,7 +113,10 @@ impl Slight {
 
     /// Print device with given `id` if it exists
     pub fn print_device(id: Cow<str>) -> Result<()> {
-        let devices = Self::scan_devices();
+        let devices = Self::scan_devices()?
+            .into_iter()
+            .map(|d| d.unwrap()) // TODO: error hangling
+            .collect::<Vec<_>>();
 
         if devices.is_empty() {
             return Err(Error::NoDevices);
@@ -141,7 +145,7 @@ impl Slight {
         }
 
         if self.range.is_some() {
-            for v in self.range.as_ref().unwrap().build() {
+            for v in self.range.as_ref().unwrap().build() { // TODO: error hangling
                 self.device.brightness.set(v, &mut io)?;
                 std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
             }

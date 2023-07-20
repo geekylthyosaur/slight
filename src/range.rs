@@ -1,6 +1,7 @@
 use crate::error::{Error, Result};
 use std::borrow::Cow;
 use std::cmp::Ordering;
+use std::ops::Neg;
 
 pub struct Range {
     curr: usize,
@@ -20,26 +21,23 @@ impl Range {
     pub fn try_from_input(self, s: Cow<str>) -> Result<Box<dyn RangeBuilder>> {
         let mut chars = s.chars().peekable();
 
-        let sign;
-        let r = if chars.next_if_eq(&'-').is_some() {
-            sign = -1.0;
-            self.by()
+        let (r, sign) = if chars.next_if_eq(&'-').is_some() {
+            (self.by(), -1.0)
         } else if chars.next_if_eq(&'+').is_some() {
-            sign = 1.0;
-            self.by()
+            (self.by(), 1.0)
         } else {
-            sign = 1.0;
-            self.to()
+            (self.to(), 1.0)
         };
 
         let s = chars
             .clone()
             .take_while(|&c| c != '%')
             .collect::<Cow<str>>();
+        let v = sign * s.parse::<f32>().map_err(|_| Error::InvalidInput)?;
         Ok(Box::new(if let Some('%') = chars.last() {
-            r.relative(sign * s.parse::<f32>().map_err(|_| Error::InvalidInput)?)
+            r.relative(v)
         } else {
-            r.absolute(sign * s.parse::<f32>().map_err(|_| Error::InvalidInput)?)
+            r.absolute(v)
         }))
     }
 
@@ -70,7 +68,7 @@ impl Range {
 
     fn exponential(&self) -> Box<dyn DoubleEndedIterator<Item = usize> + '_> {
         Box::new((0..=100).map(|v: usize| {
-            ((v as f32).powf(self.exponent) * 100f32.powf(-self.exponent) * self.max as f32)
+            ((v as f32).powf(self.exponent) * 100f32.powf(self.exponent.neg()) * self.max as f32)
                 as usize
         }))
     }

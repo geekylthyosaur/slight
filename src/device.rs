@@ -1,17 +1,7 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::{Path, PathBuf};
 
-use crate::{
-    brightness::Brightness,
-    class::Class,
-    error::{Error, Result},
-    io::IO,
-};
-
-pub trait Toggle {
-    fn is_toggleable(&self) -> bool;
-    fn toggle(self, io: &mut IO) -> Result<()>;
-}
+use crate::{brightness::Brightness, class::Class, error::{Error, Result}, io::IO, ToggleState};
 
 #[derive(Debug, Clone)]
 pub struct Device {
@@ -20,14 +10,20 @@ pub struct Device {
     pub brightness: Brightness,
 }
 
-impl Toggle for Device {
+impl Device {
     fn is_toggleable(&self) -> bool {
         self.brightness.max() == 1
     }
 
-    fn toggle(mut self, io: &mut IO) -> Result<()> {
+    pub fn toggle(mut self, io: &mut IO, state: Option<ToggleState>) -> Result<()> {
         if self.is_toggleable() {
-            let new = self.brightness.as_value() ^ 1;
+            let new = if let Some(ToggleState::On) = state {
+                self.brightness.max()
+            } else if let Some(ToggleState::Off) = state {
+                0
+            } else {
+                self.brightness.as_value() ^ 1
+            };
             self.brightness.set(new, io)
         } else {
             Err(Error::CannotToggle {
@@ -76,6 +72,18 @@ impl TryFrom<&Path> for Id {
             Some(s) => Ok(Id(s.to_owned())),
             None => Err(p.into()),
         }
+    }
+}
+
+impl From<String> for Id {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
+}
+
+impl AsRef<str> for Id {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
     }
 }
 

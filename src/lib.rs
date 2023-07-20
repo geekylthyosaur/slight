@@ -54,7 +54,7 @@ impl Slight {
         let input = input.into();
         let devices = Self::scan_devices()?
             .into_iter()
-            .map(|d| d.unwrap()) // TODO: error hangling
+            .map(|d| d.unwrap()) // TODO: error handling
             .collect::<Vec<_>>();
         let device = Self::select_device(&devices, id.map(Cow::from))?.clone();
         let exponent = match exponent {
@@ -97,7 +97,7 @@ impl Slight {
     pub fn print_devices() -> Result<()> {
         let devices = Self::scan_devices()?
             .into_iter()
-            .map(|d| d.unwrap()) // TODO: error hangling
+            .map(|d| d.unwrap()) // TODO: error handling
             .collect::<Vec<_>>();
 
         if devices.is_empty() {
@@ -115,7 +115,7 @@ impl Slight {
     pub fn print_device(id: Cow<str>) -> Result<()> {
         let devices = Self::scan_devices()?
             .into_iter()
-            .map(|d| d.unwrap()) // TODO: error hangling
+            .map(|d| d.unwrap()) // TODO: error handling
             .collect::<Vec<_>>();
 
         if devices.is_empty() {
@@ -145,7 +145,7 @@ impl Slight {
         }
 
         if self.range.is_some() {
-            for v in self.range.as_ref().unwrap().build() { // TODO: error hangling
+            for v in self.range.as_ref().unwrap().build() { // TODO: error handling
                 self.device.brightness.set(v, &mut io)?;
                 std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
             }

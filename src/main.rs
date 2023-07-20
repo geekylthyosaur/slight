@@ -24,7 +24,7 @@ pub struct Args {
     #[clap(allow_hyphen_values(true))]
     input: Option<String>,
 
-    /// List all available devices or the one with given id
+    /// List all available devices or the ones with given id
     #[clap(short, long, conflicts_with("input"), num_args = 0.., value_delimiter = ' ')]
     list: Option<Vec<Id>>,
 

@@ -10,38 +10,32 @@ Linux utility to control backlight brightness smoothly.
 
 ## Usage
 ```
-USAGE:
-    slight [OPTIONS] [INPUT]
+Arguments:
+  [INPUT]
+          Input string to control backlight brightness
+          - set exact absolute brightness value: `n`;
+          - increase/decrease current brightness by absolute value: `+n`/`-n`;
+          - set exact relative brightness value: `n%`;
+          - increase/decrease current brightness by relative value: `+n%`/`-n%`.
 
-ARGS:
-    <INPUT>
-            Input string to control backlight brightness:
-              - set exact absolute brightness value: `n`;
-              - increase/decrease current brightness by absolute value: `+n` or `-n`;
-              - set exact relative brightness value: `n%`;
-              - increase/decrease current brightness by relative value: `+n%` or `-n%`.
-
-OPTIONS:
-    -e, --exponent [<EXPONENT>]
-            Use exponential range with given exponent (or default = 4.0)
-
-    -h, --help
-            Print help information
-
-    -i, --id <ID>
-            Change brightness of device with given id (use --list to find one)
-
-    -l, --list [<LIST>]
-            List all available devices or the one with given id
-
-    -s, --stdout
-            Write to stdout instead of sysfs
-
-    -v, --verbose
-            Being verbose about what is going on
-
-    -V, --version
-            Print version information
+Options:
+  -i, --id <ID>
+          Change brightness of device with given id (use --list to find one)
+  -l, --list [<LIST>...]
+          List all available devices or the ones with given id
+  -e, --exponent [<EXPONENT>]
+          Use exponential range with given exponent (or default = 4.0)
+  -s, --stdout
+          Write to stdout instead of sysfs
+  -t, --toggle [<TOGGLE>]
+          Toggle value of device with only two available values (0/1)
+          [possible values: on, off]
+  -v, --verbose
+          Being verbose about what is going on
+  -h, --help
+          Print help (see a summary with '-h')
+  -V, --version
+          Print version
 ```
 
 ## Permissions

@@ -43,3 +43,6 @@ OPTIONS:
     -V, --version
             Print version information
 ```
+
+## Permissions
+To set up udev rules to manage the kernel sysfs permissions put [90-backlight.rules](90-backlight.rules) into `/etc/udev/rules.d/` or other location of your udev rules and make sure that your user is part of `video` group.

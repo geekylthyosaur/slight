@@ -9,7 +9,7 @@ pub use crate::device::Id;
 use crate::{
     device::Device,
     error::{Error, Result},
-    range::{Range, RangeBuilder},
+    range::Range,
 };
 
 /// Default value for exponent when using `--exponent` flag without given value
@@ -49,55 +49,17 @@ struct Flags {
 
 pub struct Slight {
     mode: Mode,
-    device: Device,
-    range: Option<Box<dyn RangeBuilder>>,
+    id: Option<Id>,
     flags: Flags,
 }
 
 impl Slight {
-    pub fn new(id: impl Into<Option<Id>>, mode: Mode) -> Result<Slight> {
-        let devices = Device::all()
-            .into_iter()
-            .map(Result::unwrap) // TODO: error handling
-            .collect::<Vec<_>>();
-        let device = Device::select(&devices, id.into())?.clone();
-
-        let curr = device.brightness().current;
-        let max = device.brightness().max;
-
-        let range = match mode.clone() {
-            // FIXME: clone?
-            Mode::List(ids) => {
-                if ids.is_empty() {
-                    Slight::print_devices(&devices)?;
-                } else {
-                    for id in ids {
-                        Slight::print_device(&devices, &id)?;
-                    }
-                };
-                None
-            }
-            Mode::Regular { input } => {
-                let r = Range::new(curr, max, NO_EXPONENT_DEFAULT);
-                Some(r.try_from_input(input.into())?)
-            }
-            Mode::Exponential { input, exponent } => {
-                let exponent = exponent.unwrap_or(EXPONENT_DEFAULT);
-                let r = Range::new(curr, max, exponent);
-                Some(r.try_from_input(input.into())?)
-            }
-            Mode::Toggle(_) => {
-                // FIXME
-                None
-            }
-        };
-
-        Ok(Slight {
+    pub fn new(id: impl Into<Option<Id>>, mode: Mode) -> Slight {
+        Slight {
             mode,
-            device,
+            id: id.into(),
             flags: Flags::default(),
-            range,
-        })
+        }
     }
 
     pub fn verbose(&mut self, v: bool) {
@@ -108,39 +70,57 @@ impl Slight {
         self.flags.stdout = v;
     }
 
-    /// Print all available devices
-    pub fn print_devices(devices: &[Device]) -> Result<()> {
-        if devices.is_empty() {
-            Err(Error::NoDevices)?;
-        }
-        for dev in devices {
-            println!("{dev}");
-        }
+    pub fn run(self) -> Result<()> {
+        let devices = Device::all()
+            .into_iter()
+            .map(Result::unwrap) // TODO: error handling
+            .collect::<Vec<_>>();
+        let mut device = Device::select(&devices, self.id)?.clone();
+        let curr = device.brightness().current;
+        let max = device.brightness().max;
 
-        Ok(())
-    }
-
-    /// Print device with given `id` if it exists
-    pub fn print_device(devices: &[Device], id: &Id) -> Result<()> {
-        let dev = Device::find(devices, id).ok_or(Error::SpecifiedDeviceNotFound)?;
-        println!("{dev}");
-        Ok(())
-    }
-
-    /// Set brightness of device
-    pub fn set_brightness(mut self) -> Result<()> {
-        if let Mode::Toggle(toggle_state) = self.mode {
-            self.device.toggle(toggle_state)?;
-            return Ok(());
-        }
-
-        if self.range.is_some() {
-            // TODO: error handling
-            for v in self.range.as_ref().unwrap().build() {
-                self.device.set_brightness(v)?;
-                std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
+        let range = match self.mode {
+            Mode::List(ids) => {
+                Self::print_devices(&devices, &ids)?;
+                return Ok(());
             }
+            Mode::Toggle(toggle_state) => {
+                device.toggle(toggle_state)?;
+                return Ok(());
+            }
+            Mode::Regular { input } => {
+                let r = Range::new(curr, max, NO_EXPONENT_DEFAULT);
+                Some(r.try_from_input(input.into())?)
+            }
+            Mode::Exponential { input, exponent } => {
+                let exponent = exponent.unwrap_or(EXPONENT_DEFAULT);
+                let r = Range::new(curr, max, exponent);
+                Some(r.try_from_input(input.into())?)
+            }
+        };
+
+        if let Some(range) = range {
+            range.as_ref().build().try_for_each(|v| {
+                device.set_brightness(v)?;
+                std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
+                Ok::<(), Error>(())
+            })?;
         }
+        Ok(())
+    }
+
+    fn print_devices(devices: &[Device], ids: &[Id]) -> Result<()> {
+        devices.is_empty().then_some(()).ok_or(Error::NoDevices)?;
+
+        if ids.is_empty() {
+            devices.iter().for_each(|d| println!("{d}"));
+        } else {
+            devices
+                .iter()
+                .filter(|d| ids.contains(&d.id()))
+                .for_each(|d| println!("{d}"));
+        }
+
         Ok(())
     }
 }

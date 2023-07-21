@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::{
     brightness::Brightness,
@@ -19,10 +19,6 @@ pub struct Device(udev::Device);
 impl Device {
     pub fn new(path: &Path) -> Result<Self> {
         Ok(Device(udev::Device::from_syspath(path)?))
-    }
-
-    pub fn my_path(&self) -> PathBuf {
-        self.0.syspath().into()
     }
 
     fn is_toggleable(&self) -> bool {
@@ -51,7 +47,7 @@ impl Device {
     pub fn set_brightness(&mut self, value: usize) -> Result<()> {
         Ok(self
             .0
-            .set_attribute_value(CURRENT_BRIGHTNESS, value.to_string().as_str())?)
+            .set_attribute_value(CURRENT_BRIGHTNESS, value.to_string())?)
     }
 
     pub fn brightness(&self) -> Brightness {

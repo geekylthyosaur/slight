@@ -8,8 +8,7 @@ use clap::{Parser, ValueEnum};
 #[command(arg_required_else_help(true))]
 pub struct Args {
     /// Change brightness of device with given id (use --list to find one)
-    // FIXME: require input
-    #[clap(short, long)]
+    #[clap(short, long, requires("input"))]
     id: Option<Id>,
 
     /// Input string to control backlight brightness
@@ -37,7 +36,7 @@ pub struct Args {
     stdout: bool,
 
     /// Toggle value of device with only two available values (0/1)
-    #[clap(short, long, requires("id"))]
+    #[clap(short, long, conflicts_with("input"), requires("id"))]
     toggle: Option<Option<ToggleState>>,
 
     /// Being verbose about what is going on

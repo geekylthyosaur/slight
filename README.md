@@ -40,3 +40,5 @@ Options:
 
 ## Permissions
 To set up udev rules to manage the kernel sysfs permissions put [90-backlight.rules](90-backlight.rules) into `/etc/udev/rules.d/` or other location of your udev rules and make sure that your user is part of `video` group.
+
+Alternatively make sure your system uses `elogind` or `systemd-logind` (TODO: check if `polkit` is required).

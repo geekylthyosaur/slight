@@ -10,6 +10,8 @@ pub enum Error {
     InvalidInput,
     #[error("Cannot toggle '{}' as it can have more than two values ({}/{})!", .0.id(), .0.brightness().current, .0.brightness().max)]
     CannotToggle(crate::device::Device),
+    #[error(transparent)]
+    Dbus(#[from] dbus::Error),
     #[error("No devices found!")]
     NoDevices,
     #[error("No suitable device found!")]

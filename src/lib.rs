@@ -81,8 +81,6 @@ impl Slight {
         let curr = device.brightness().current;
         let max = device.brightness().max;
 
-        check_write_permissions(device.path())?;
-
         let range = match self.mode {
             Mode::List(ids) => {
                 Self::print_devices(&devices, &ids)?;

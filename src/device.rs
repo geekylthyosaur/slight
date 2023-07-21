@@ -1,3 +1,4 @@
+use dbus::blocking::{BlockingSender, Connection};
 use std::ffi::OsStr;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
@@ -41,9 +42,25 @@ impl Device {
     }
 
     pub fn set_brightness(&mut self, value: usize) -> Result<()> {
-        Ok(self
-            .0
-            .set_attribute_value(CURRENT_BRIGHTNESS, value.to_string())?)
+        if crate::check_write_permissions(self.path()).is_ok() {
+            Ok(self
+                .0
+                .set_attribute_value(CURRENT_BRIGHTNESS, value.to_string())?)
+        } else {
+            let conn = Connection::new_system()?;
+            let msg = dbus::Message::new_method_call(
+                "org.freedesktop.login1",
+                "/org/freedesktop/login1/session/auto",
+                "org.freedesktop.login1.Session",
+                "SetBrightness",
+            )
+            .map_err(|e| Error::Dbus(dbus::Error::new_failed(e.as_ref())))?
+            .append2(self.class().filename(), self.id().as_ref())
+            .append1(value as u32);
+
+            conn.send_with_reply_and_block(msg, std::time::Duration::from_secs(1))?;
+            Ok(())
+        }
     }
 
     pub fn brightness(&self) -> Brightness {

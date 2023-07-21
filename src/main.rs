@@ -62,12 +62,11 @@ fn main() -> slight::error::Result<()> {
         unreachable!()
     };
 
-    let mut slight = Slight::id(args.id)?
-        .mode(mode)
-        .build()?;
+    let mut slight = Slight::new(args.id, mode)?;
 
     slight.verbose(args.verbose);
     slight.stdout(args.stdout);
+
     slight.set_brightness()?;
 
     Ok(())

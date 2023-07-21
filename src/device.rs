@@ -11,6 +11,18 @@ pub struct Device {
 }
 
 impl Device {
+    pub fn new(class: Class, path: &Path) -> Result<Self> {
+        Ok(Self {
+            class,
+            id: path.try_into()?,
+            brightness: path.try_into()?,
+        })
+    }
+
+    pub fn my_path(&self) -> PathBuf {
+        PathBuf::from(self.class).join(&self.id.0)
+    }
+
     fn is_toggleable(&self) -> bool {
         self.brightness.max() == 1
     }
@@ -33,19 +45,21 @@ impl Device {
             })
         }
     }
-}
 
-impl Device {
-    pub fn new(class: Class, path: &Path) -> Result<Self> {
-        Ok(Self {
-            class,
-            id: path.try_into()?,
-            brightness: path.try_into()?,
-        })
+    pub fn select(devices: &[Device], id: Option<Id>) -> Result<&Device> {
+        if let Some(id) = id {
+            Self::find(devices, &id).ok_or(Error::SpecifiedDeviceNotFound)
+        } else {
+            Self::find_default(devices).ok_or(Error::SuitableDeviceNotFound)
+        }
     }
 
-    pub fn my_path(&self) -> PathBuf {
-        PathBuf::from(self.class).join(&self.id.0)
+    pub fn find<'a>(devices: &'a [Device], id: &Id) -> Option<&'a Device> {
+        devices.iter().find(|&d| d.id == id.as_ref())
+    }
+
+    fn find_default(devices: &[Device]) -> Option<&Device> {
+        devices.iter().find(|&d| d.class == Class::Backlight)
     }
 }
 

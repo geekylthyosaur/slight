@@ -56,33 +56,25 @@ pub struct Slight {
     flags: Flags,
 }
 
-pub struct SlightModeBuilder {
-    device: Device,
-}
+impl Slight {
+    pub fn new(id: impl Into<Option<Id>>, mode: Mode) -> Result<Slight> {
+        let devices = Self::scan_devices()?
+            .into_iter()
+            .map(Result::unwrap) // TODO: error handling
+            .collect::<Vec<_>>();
 
-impl SlightModeBuilder {
-    pub fn mode(self, mode: Mode) -> SlightRangeBuilder {
-        SlightRangeBuilder { mode, device: self.device }
-    }
-}
+        let device = Device::select(&devices, id.into())?.clone();
 
-pub struct SlightRangeBuilder {
-    device: Device,
-    mode: Mode,
-}
+        let curr = device.brightness.as_value();
+        let max = device.brightness.max();
 
-impl SlightRangeBuilder {
-    pub fn build(self) -> Result<Slight> {
-        let curr = self.device.brightness.as_value();
-        let max = self.device.brightness.max();
-        // FIXME: clone?
-        let range = match self.mode.clone() {
+        let range = match mode.clone() { // FIXME: clone?
             Mode::List(ids) => {
                 if ids.is_empty() {
-                    Slight::print_devices()?;
+                    Slight::print_devices(&devices);
                 } else {
                     for id in ids {
-                        Slight::print_device(id)?;
+                        Slight::print_device(&devices, &id)?;
                     }
                 };
                 None
@@ -102,20 +94,7 @@ impl SlightRangeBuilder {
             },
         };
 
-        Ok(Slight { mode: self.mode, device: self.device, flags: Flags::default(), range })
-    }
-}
-
-impl Slight {
-    pub fn id(id: impl Into<Option<Id>>) -> Result<SlightModeBuilder> {
-        let devices = Self::scan_devices()?
-            .into_iter()
-            .map(Result::unwrap) // TODO: error handling
-            .collect::<Vec<_>>();
-
-        let device = Self::select_device(&devices, id.into())?.clone();
-
-        Ok(SlightModeBuilder { device })
+        Ok(Slight { mode, device, flags: Flags::default(), range })
     }
 
     pub fn verbose(&mut self, v: bool) {
@@ -126,55 +105,18 @@ impl Slight {
         self.flags.stdout = v;
     }
 
-    #[allow(clippy::unnecessary_wraps)]
-    fn scan_devices() -> Result<Vec<Result<Device>>> {
-        Ok(Class::iter()
-            .flat_map(|class| {
-                let path = PathBuf::from(class);
-                IO::scan(path.as_path()).map(|ids| {
-                    ids.map(|id| {
-                        let path = path.join(id);
-                        Device::new(class, path.as_path())
-                    })
-                    .collect::<Vec<_>>()
-                })
-            })
-            .flatten()
-            .collect())
-    }
-
     /// Print all available devices
-    pub fn print_devices() -> Result<()> {
-        let devices = Self::scan_devices()?
-            .into_iter()
-            .map(Result::unwrap) // TODO: error handling
-            .collect::<Vec<_>>();
-
-        if devices.is_empty() {
-            return Err(Error::NoDevices);
-        }
-
+    pub fn print_devices(devices: &[Device]) {
         for dev in devices {
             println!("{dev}");
         }
-
-        Ok(())
     }
 
     /// Print device with given `id` if it exists
-    pub fn print_device(id: impl Into<Id>) -> Result<()> {
-        let devices = Self::scan_devices()?
-            .into_iter()
-            .map(Result::unwrap) // TODO: error handling
-            .collect::<Vec<_>>();
-
-        if devices.is_empty() {
-            return Err(Error::NoDevices);
-        }
-
-        let dev = Self::find_device(&devices, &id.into()).ok_or(Error::SpecifiedDeviceNotFound)?;
+    pub fn print_device(devices: &[Device], id: &Id) -> Result<()> {
+        let dev = Device::find(devices, id)
+            .ok_or(Error::SpecifiedDeviceNotFound)?;
         println!("{dev}");
-
         Ok(())
     }
 
@@ -204,19 +146,20 @@ impl Slight {
         Ok(())
     }
 
-    fn select_device(devices: &[Device], id: Option<Id>) -> Result<&Device> {
-        if let Some(id) = id {
-            Self::find_device(devices, &id).ok_or(Error::SpecifiedDeviceNotFound)
-        } else {
-            Self::default_device(devices).ok_or(Error::SuitableDeviceNotFound)
-        }
-    }
-
-    fn find_device<'a>(devices: &'a [Device], id: &Id) -> Option<&'a Device> {
-        devices.iter().find(|&d| d.id == id.as_ref())
-    }
-
-    fn default_device(devices: &[Device]) -> Option<&Device> {
-        devices.iter().find(|&d| d.class == Class::Backlight)
+    #[allow(clippy::unnecessary_wraps)]
+    fn scan_devices() -> Result<Vec<Result<Device>>> {
+        Ok(Class::iter()
+            .flat_map(|class| {
+                let path = PathBuf::from(class);
+                IO::scan(path.as_path()).map(|ids| {
+                    ids.map(|id| {
+                        let path = path.join(id);
+                        Device::new(class, path.as_path())
+                    })
+                        .collect::<Vec<_>>()
+                })
+            })
+            .flatten()
+            .collect())
     }
 }

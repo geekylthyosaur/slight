@@ -13,5 +13,5 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.1.4", default-features = false, features = ["std", "help", "derive", "cargo"] }
-strum = { version = "0.24", default-features = false, features = [ "derive" ] }
 thiserror = { version = "1.0.40", default-features = false }
+udev = { version = "0.7.0", default-features = false }

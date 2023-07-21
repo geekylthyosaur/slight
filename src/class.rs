@@ -1,11 +1,9 @@
-use strum::EnumIter;
-
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::{Path, PathBuf};
 
 const PATH: &str = "/sys/class";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Class {
     Backlight,
     Led,

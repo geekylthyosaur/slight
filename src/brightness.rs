@@ -9,13 +9,21 @@ use crate::{
 pub const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
 const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Brightness {
     current: usize,
     max: usize,
 }
 
 impl Brightness {
+    pub fn new(current: usize, max: usize) -> Self {
+        Self { current, max }
+    }
+
+    pub fn current(&self) -> usize {
+        self.current
+    }
+
     pub fn set(&mut self, new: usize, io: &mut IO) -> Result<()> {
         if new != self.current && new <= self.max {
             io.write_number(new).map(|_| self.current = new)?;

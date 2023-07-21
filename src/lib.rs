@@ -11,6 +11,8 @@ use crate::{
     error::{Error, Result},
     range::Range,
 };
+use nix::unistd;
+use std::path::Path;
 
 /// Default value for exponent when using `--exponent` flag without given value
 const EXPONENT_DEFAULT: f32 = 4.0;
@@ -79,6 +81,8 @@ impl Slight {
         let curr = device.brightness().current;
         let max = device.brightness().max;
 
+        check_write_permissions(device.path())?;
+
         let range = match self.mode {
             Mode::List(ids) => {
                 Self::print_devices(&devices, &ids)?;
@@ -110,7 +114,9 @@ impl Slight {
     }
 
     fn print_devices(devices: &[Device], ids: &[Id]) -> Result<()> {
-        devices.is_empty().then_some(()).ok_or(Error::NoDevices)?;
+        if devices.is_empty() {
+            Err(Error::NoDevices)?;
+        }
 
         if ids.is_empty() {
             devices.iter().for_each(|d| println!("{d}"));
@@ -123,4 +129,21 @@ impl Slight {
 
         Ok(())
     }
+}
+
+pub(crate) fn check_write_permissions(path: &Path) -> Result<()> {
+    let user_groups = unistd::getgroups().map_err(|_| Error::Permission)?;
+    let video_group = unistd::Group::from_name("video")
+        .ok()
+        .flatten()
+        .ok_or(Error::Permission)?
+        .gid;
+    let is_path_writable = path
+        .metadata()
+        .map(|m| !m.permissions().readonly())
+        .map_err(|_| Error::Permission)?;
+
+    (user_groups.contains(&video_group) && is_path_writable)
+        .then_some(())
+        .ok_or(Error::Permission)
 }

@@ -30,17 +30,13 @@ impl Device {
             let new = if let Some(ToggleState::On) = state {
                 self.brightness().max
             } else if let Some(ToggleState::Off) = state {
-                0
+                usize::MIN
             } else {
                 self.brightness().current ^ 1
             };
             self.set_brightness(new)
         } else {
-            Err(Error::CannotToggle {
-                id: self.id().to_string(),
-                curr: self.brightness().current,
-                max: self.brightness().max,
-            })
+            Err(Error::CannotToggle(self.to_owned()))
         }
     }
 
@@ -64,6 +60,10 @@ impl Device {
             .and_then(|s| s.parse::<usize>().ok())
             .unwrap();
         Brightness::new(current, max)
+    }
+
+    pub fn path(&self) -> &Path {
+        self.0.syspath()
     }
 
     pub fn class(&self) -> Class {

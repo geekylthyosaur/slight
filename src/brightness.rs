@@ -1,53 +1,14 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::path::Path;
-
-use crate::{
-    error::{Error, Result},
-    io::IO,
-};
-
-pub const CURRENT_BRIGHTNESS_FILENAME: &str = "brightness";
-const MAX_BRIGHTNESS_FILENAME: &str = "max_brightness";
 
 #[derive(Debug, Clone, Copy)]
 pub struct Brightness {
-    current: usize,
-    max: usize,
+    pub current: usize,
+    pub max: usize,
 }
 
 impl Brightness {
     pub fn new(current: usize, max: usize) -> Self {
         Self { current, max }
-    }
-
-    pub fn current(&self) -> usize {
-        self.current
-    }
-
-    pub fn set(&mut self, new: usize, io: &mut IO) -> Result<()> {
-        if new != self.current && new <= self.max {
-            io.write_number(new).map(|_| self.current = new)?;
-        } // TODO: else
-        Ok(())
-    }
-
-    pub fn max(&self) -> usize {
-        self.max
-    }
-
-    pub fn as_value(&self) -> usize {
-        self.current
-    }
-}
-
-impl TryFrom<&Path> for Brightness {
-    type Error = Error;
-
-    fn try_from(p: &Path) -> Result<Self> {
-        Ok(Self {
-            current: IO::read_number(&p.join(CURRENT_BRIGHTNESS_FILENAME))?,
-            max: IO::read_number(&p.join(MAX_BRIGHTNESS_FILENAME))?,
-        })
     }
 }
 

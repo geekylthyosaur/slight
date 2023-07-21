@@ -1,7 +1,4 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::path::{Path, PathBuf};
-
-const PATH: &str = "/sys/class";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Class {
@@ -10,17 +7,19 @@ pub enum Class {
 }
 
 impl Class {
-    fn name(self) -> &'static str {
+    pub fn filename(self) -> &'static str {
         match self {
             Self::Backlight => "backlight",
             Self::Led => "leds",
         }
     }
-}
 
-impl From<Class> for PathBuf {
-    fn from(c: Class) -> Self {
-        Path::new(PATH).join(c.name())
+    pub fn from_filename(s: &str) -> Option<Self> {
+        match s {
+            "backlight" => Some(Self::Backlight),
+            "leds" => Some(Self::Led),
+            _ => None,
+        }
     }
 }
 

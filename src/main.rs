@@ -28,7 +28,7 @@ pub struct Args {
     list: Option<Vec<Id>>,
 
     /// Use exponential range with given exponent (or default = 4.0)
-    #[clap(short, long)]
+    #[clap(short, long, requires("input"))]
     exponent: Option<Option<f32>>,
 
     /// Write to stdout instead of sysfs
@@ -40,6 +40,7 @@ pub struct Args {
     toggle: Option<Option<ToggleState>>,
 
     /// Being verbose about what is going on
+    // FIXME: unreachable
     #[clap(short, long)]
     verbose: bool,
 }

@@ -3,14 +3,12 @@ mod brightness;
 mod class;
 mod device;
 pub mod error;
-mod io;
 mod range;
 
 pub use crate::device::Id;
 use crate::{
     device::Device,
     error::{Error, Result},
-    io::IO,
     range::{Range, RangeBuilder},
 };
 
@@ -64,14 +62,14 @@ impl Slight {
             .collect::<Vec<_>>();
         let device = Device::select(&devices, id.into())?.clone();
 
-        let curr = device.brightness().as_value();
-        let max = device.brightness().max();
+        let curr = device.brightness().current;
+        let max = device.brightness().max;
 
         let range = match mode.clone() {
             // FIXME: clone?
             Mode::List(ids) => {
                 if ids.is_empty() {
-                    Slight::print_devices(&devices);
+                    Slight::print_devices(&devices)?;
                 } else {
                     for id in ids {
                         Slight::print_device(&devices, &id)?;
@@ -111,10 +109,15 @@ impl Slight {
     }
 
     /// Print all available devices
-    pub fn print_devices(devices: &[Device]) {
+    pub fn print_devices(devices: &[Device]) -> Result<()> {
+        if devices.is_empty() {
+            Err(Error::NoDevices)?;
+        }
         for dev in devices {
             println!("{dev}");
         }
+
+        Ok(())
     }
 
     /// Print device with given `id` if it exists
@@ -125,26 +128,16 @@ impl Slight {
     }
 
     /// Set brightness of device
-    pub fn set_brightness(self) -> Result<()> {
-        let mut io = if self.flags.stdout {
-            IO::stdout()
-        } else {
-            let path = &self.device.my_path();
-            // TODO: show instructions
-            // FIXME: false positive
-            // IO::check_write_permissions(path)?;
-            IO::file(path)?
-        };
-
+    pub fn set_brightness(mut self) -> Result<()> {
         if let Mode::Toggle(toggle_state) = self.mode {
-            self.device.toggle(&mut io, toggle_state)?;
+            self.device.toggle(toggle_state)?;
             return Ok(());
         }
 
         if self.range.is_some() {
             // TODO: error handling
             for v in self.range.as_ref().unwrap().build() {
-                self.device.brightness().set(v, &mut io)?;
+                self.device.set_brightness(v)?;
                 std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
             }
         }

@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::ops::Neg;
 
+#[cfg_attr(test, derive(Debug, PartialEq))]
 #[derive(Clone, Copy)]
 pub struct Range {
     curr: usize,
@@ -10,12 +11,14 @@ pub struct Range {
     max: usize,
 }
 
+#[cfg_attr(test, derive(Debug, PartialEq))]
 #[derive(Clone, Copy)]
 pub enum Step {
     To(Range),
     By(Range),
 }
 
+#[cfg_attr(test, derive(Debug, PartialEq))]
 pub enum Value {
     Absolute(f32, Step),
     Relative(f32, Step),
@@ -31,6 +34,12 @@ impl Range {
     }
 
     pub fn try_from_input(self, input: &str) -> Result<Box<dyn Iterator<Item = usize>>> {
+        let range = self.parse_input(input)?;
+
+        Ok(range.iter())
+    }
+
+    fn parse_input(&self, input: &str) -> Result<Value> {
         let mut chars = input.chars().peekable();
 
         let (range, sign) = chars
@@ -50,13 +59,11 @@ impl Range {
             .map(|v| v.copysign(sign))
             .map_err(|_| Error::InvalidInput)?;
 
-        let range = chars
+        Ok(chars
             .last()
             .is_some_and(|c| c == '%')
             .then(|| range.relative(input))
-            .unwrap_or(range.absolute(input));
-
-        Ok(range.iter())
+            .unwrap_or(range.absolute(input)))
     }
 
     fn curr_to_new(self, new: usize) -> Box<dyn Iterator<Item = usize>> {
@@ -132,5 +139,54 @@ impl Step {
 
     pub fn relative(self, v: f32) -> Value {
         Value::Relative(v, self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Range, Result, Step, Value};
+
+    #[test]
+    fn parse_correct_input_ok() -> Result<()> {
+        let r = Range::new(32, 64, 1.0);
+
+        assert_eq!(r.parse_input("10")?, Value::Absolute(10.0, Step::To(r)));
+        assert_eq!(r.parse_input("-10")?, Value::Absolute(-10.0, Step::By(r)));
+        assert_eq!(r.parse_input("+10")?, Value::Absolute(10.0, Step::By(r)));
+        assert_eq!(r.parse_input("10%")?, Value::Relative(10.0, Step::To(r)));
+        assert_eq!(r.parse_input("-10%")?, Value::Relative(-10.0, Step::By(r)));
+        assert_eq!(r.parse_input("+10%")?, Value::Relative(10.0, Step::By(r)));
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_incorrect_input_err() -> Result<()> {
+        let r = Range::new(32, 64, 1.0);
+
+        assert!(r.parse_input("-%").is_err());
+        assert!(r.parse_input("-").is_err());
+        assert!(r.parse_input("%").is_err());
+        assert!(r.parse_input("+1a%").is_err());
+
+        // FIXME
+        assert_eq!(r.parse_input("+-10")?, Value::Absolute(10.0, Step::By(r)));
+        assert_eq!(r.parse_input("-+10")?, Value::Absolute(-10.0, Step::By(r)));
+        assert_eq!(r.parse_input("10%%")?, Value::Relative(10.0, Step::To(r)));
+
+        Ok(())
+    }
+
+    #[test]
+    fn no_overflow() -> Result<()> {
+        let r = Range::new(32, 64, 1.0);
+
+        assert_eq!(r.try_from_input("100")?.last(), Some(64));
+        assert_eq!(r.try_from_input("-100")?.last(), Some(0));
+        assert_eq!(r.try_from_input("+100")?.last(), Some(64));
+        assert_eq!(r.try_from_input("-100%")?.last(), Some(0));
+        assert_eq!(r.try_from_input("+100%")?.last(), Some(64));
+
+        Ok(())
     }
 }

@@ -82,22 +82,18 @@ impl Slight {
         let max = device.brightness().max;
 
         match self.mode {
-            Mode::List(ids) => {
-                Self::print_devices(&devices, &ids)
-            }
-            Mode::Toggle(toggle_state) => {
-                device.toggle(toggle_state)
-            }
+            Mode::List(ids) => Self::print_devices(&devices, &ids),
+            Mode::Toggle(toggle_state) => device.toggle(toggle_state),
             Mode::Regular { input } => {
                 let r = Range::new(curr, max, NO_EXPONENT_DEFAULT);
                 let r = r.try_from_input(input.as_ref())?;
-                device.set_brightness(r)
+                device.set_range(r)
             }
             Mode::Exponential { input, exponent } => {
                 let exponent = exponent.unwrap_or(EXPONENT_DEFAULT);
                 let r = Range::new(curr, max, exponent);
                 let r = r.try_from_input(input.as_ref())?;
-                device.set_brightness(r)
+                device.set_range(r)
             }
         }
     }

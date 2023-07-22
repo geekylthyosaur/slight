@@ -3,7 +3,12 @@ use std::ffi::OsStr;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
 
-use crate::{brightness::Brightness, class::Class, error::{Error, Result}, SLEEP_DURATION_DEFAULT, ToggleState};
+use crate::{
+    brightness::Brightness,
+    class::Class,
+    error::{Error, Result},
+    ToggleState, SLEEP_DURATION_DEFAULT,
+};
 
 const BASE_PATH: &str = "/sys/class";
 const CURRENT_BRIGHTNESS: &str = "brightness";
@@ -17,13 +22,14 @@ impl Device {
         Ok(Device(udev::Device::from_syspath(path)?))
     }
 
-
-    pub fn set_brightness(
-        &mut self,
-        mut range: Box<dyn Iterator<Item = usize>>,
-    ) -> Result<()> {
+    pub fn set_range(&mut self, mut range: Box<dyn Iterator<Item = usize>>) -> Result<()> {
         range.try_for_each(|v| {
-            self.set(v)?;
+            if crate::check_write_permissions(self.path()).is_ok() {
+                self.set_sysfs(v)?;
+            } else {
+                self.set_dbus(v)?;
+            }
+
             std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
             Ok::<(), Error>(())
         })
@@ -38,7 +44,7 @@ impl Device {
             } else {
                 self.brightness().current ^ 1
             };
-            self.set(new)
+            self.set_range(Box::new(std::iter::once(new)))
         } else {
             Err(Error::CannotToggle(self.to_owned()))
         }
@@ -48,26 +54,26 @@ impl Device {
         self.brightness().max == 1
     }
 
-    fn set(&mut self, value: usize) -> Result<()> {
-        if crate::check_write_permissions(self.path()).is_ok() {
-            Ok(self
-                .0
-                .set_attribute_value(CURRENT_BRIGHTNESS, value.to_string())?)
-        } else {
-            let conn = Connection::new_system()?;
-            let msg = dbus::Message::new_method_call(
-                "org.freedesktop.login1",
-                "/org/freedesktop/login1/session/auto",
-                "org.freedesktop.login1.Session",
-                "SetBrightness",
-            )
-            .map_err(|e| Error::Dbus(dbus::Error::new_failed(e.as_ref())))?
-            .append2(self.class().filename(), self.id().as_ref())
-            .append1(value as u32);
+    fn set_sysfs(&mut self, value: usize) -> Result<()> {
+        Ok(self
+            .0
+            .set_attribute_value(CURRENT_BRIGHTNESS, value.to_string())?)
+    }
 
-            conn.send_with_reply_and_block(msg, std::time::Duration::from_secs(1))?;
-            Ok(())
-        }
+    fn set_dbus(&mut self, value: usize) -> Result<()> {
+        let conn = Connection::new_system()?;
+        let msg = dbus::Message::new_method_call(
+            "org.freedesktop.login1",
+            "/org/freedesktop/login1/session/auto",
+            "org.freedesktop.login1.Session",
+            "SetBrightness",
+        )
+        .map_err(|e| Error::Dbus(dbus::Error::new_failed(e.as_ref())))?
+        .append2(self.class().filename(), self.id().as_ref())
+        .append1(value as u32);
+
+        conn.send_with_reply_and_block(msg, std::time::Duration::from_secs(1))?;
+        Ok(())
     }
 
     pub fn brightness(&self) -> Brightness {

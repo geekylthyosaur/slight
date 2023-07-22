@@ -43,8 +43,8 @@ impl Range {
 
     fn curr_to_new(&self, new: usize) -> Box<dyn Iterator<Item = usize>> {
         match new.cmp(&self.curr) {
-            Ordering::Greater => Box::new(self.curr..=new),
-            Ordering::Less => Box::new((new..=self.curr).rev()),
+            Ordering::Greater => Box::new((self.curr..=new).skip(1)),
+            Ordering::Less => Box::new((new..=self.curr).rev().skip(1)),
             Ordering::Equal => Box::new(std::iter::empty()),
         }
     }
@@ -113,14 +113,18 @@ impl RangeBuilder for Value {
         // TODO dedup ends
         // 2 2 1 1 1 1 0 0 0 0 0 0 0 0 -> 2 2 1 1 1 1 0
         match self {
-            Value::Absolute(new, Step::To(r)) => r.curr_to_new(*new as usize),
+            Value::Absolute(new, Step::To(r)) => {
+                // FIXME: max overflow
+                r.curr_to_new(*new as usize)
+            },
             Value::Absolute(v, Step::By(r)) => {
-                let new = (r.curr as isize).checked_add(*v as isize).unwrap_or(0) as usize;
-                r.curr_to_new(new)
+                // FIXME: min & max overflow
+                let new = (r.curr as isize).checked_add(*v as isize).unwrap_or(0);
+                r.curr_to_new(new as usize)
             }
             Value::Relative(percent, Step::To(r)) => {
-                let new = (r.max as f32 / 100.0 * percent) as usize;
-                r.curr_to_new(new)
+                let new = r.max as f32 / 100.0 * percent;
+                r.curr_to_new(new as usize)
             }
             Value::Relative(percent, Step::By(r)) => r.by_percent(*percent),
         }

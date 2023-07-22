@@ -114,13 +114,13 @@ impl RangeBuilder for Value {
         // 2 2 1 1 1 1 0 0 0 0 0 0 0 0 -> 2 2 1 1 1 1 0
         match self {
             Value::Absolute(new, Step::To(r)) => {
-                // FIXME: max overflow
-                r.curr_to_new(*new as usize)
+                let new = usize::min(*new as usize, r.max);
+                r.curr_to_new(new)
             },
             Value::Absolute(v, Step::By(r)) => {
-                // FIXME: min & max overflow
-                let new = (r.curr as isize).checked_add(*v as isize).unwrap_or(0);
-                r.curr_to_new(new as usize)
+                let new = r.curr.saturating_add_signed(*v as isize);
+                let new = usize::min(new, r.max);
+                r.curr_to_new(new)
             }
             Value::Relative(percent, Step::To(r)) => {
                 let new = r.max as f32 / 100.0 * percent;

@@ -3,12 +3,7 @@ use std::ffi::OsStr;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
 
-use crate::{
-    brightness::Brightness,
-    class::Class,
-    error::{Error, Result},
-    ToggleState,
-};
+use crate::{brightness::Brightness, class::Class, error::{Error, Result}, SLEEP_DURATION_DEFAULT, ToggleState};
 
 const BASE_PATH: &str = "/sys/class";
 const CURRENT_BRIGHTNESS: &str = "brightness";
@@ -22,8 +17,16 @@ impl Device {
         Ok(Device(udev::Device::from_syspath(path)?))
     }
 
-    fn is_toggleable(&self) -> bool {
-        self.brightness().max == 1
+
+    pub fn set_brightness(
+        &mut self,
+        mut range: Box<dyn Iterator<Item = usize>>,
+    ) -> Result<()> {
+        range.try_for_each(|v| {
+            self.set(v)?;
+            std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
+            Ok::<(), Error>(())
+        })
     }
 
     pub fn toggle(&mut self, state: Option<ToggleState>) -> Result<()> {
@@ -35,13 +38,17 @@ impl Device {
             } else {
                 self.brightness().current ^ 1
             };
-            self.set_brightness(new)
+            self.set(new)
         } else {
             Err(Error::CannotToggle(self.to_owned()))
         }
     }
 
-    pub fn set_brightness(&mut self, value: usize) -> Result<()> {
+    fn is_toggleable(&self) -> bool {
+        self.brightness().max == 1
+    }
+
+    fn set(&mut self, value: usize) -> Result<()> {
         if crate::check_write_permissions(self.path()).is_ok() {
             Ok(self
                 .0
@@ -69,13 +76,13 @@ impl Device {
             .attribute_value(CURRENT_BRIGHTNESS)
             .and_then(OsStr::to_str)
             .and_then(|s| s.parse::<usize>().ok())
-            .unwrap();
+            .unwrap_or_else(|| unreachable!());
         let max = self
             .0
             .attribute_value(MAX_BRIGHTNESS)
             .and_then(OsStr::to_str)
             .and_then(|s| s.parse::<usize>().ok())
-            .unwrap();
+            .unwrap_or_else(|| unreachable!());
         Brightness::new(current, max)
     }
 

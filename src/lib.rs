@@ -20,7 +20,7 @@ const EXPONENT_DEFAULT: f32 = 4.0;
 const NO_EXPONENT_DEFAULT: f32 = 1.0;
 // TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
 /// Default time interval between brightness changes
-const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
+pub const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
 #[derive(Clone)]
 pub enum Mode {
@@ -81,34 +81,25 @@ impl Slight {
         let curr = device.brightness().current;
         let max = device.brightness().max;
 
-        let range = match self.mode {
+        match self.mode {
             Mode::List(ids) => {
-                Self::print_devices(&devices, &ids)?;
-                return Ok(());
+                Self::print_devices(&devices, &ids)
             }
             Mode::Toggle(toggle_state) => {
-                device.toggle(toggle_state)?;
-                return Ok(());
+                device.toggle(toggle_state)
             }
             Mode::Regular { input } => {
                 let r = Range::new(curr, max, NO_EXPONENT_DEFAULT);
-                Some(r.try_from_input(input.into())?)
+                let r = r.try_from_input(input.as_ref())?;
+                device.set_brightness(r)
             }
             Mode::Exponential { input, exponent } => {
                 let exponent = exponent.unwrap_or(EXPONENT_DEFAULT);
                 let r = Range::new(curr, max, exponent);
-                Some(r.try_from_input(input.into())?)
+                let r = r.try_from_input(input.as_ref())?;
+                device.set_brightness(r)
             }
-        };
-
-        if let Some(range) = range {
-            range.as_ref().build().try_for_each(|v| {
-                device.set_brightness(v)?;
-                std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
-                Ok::<(), Error>(())
-            })?;
         }
-        Ok(())
     }
 
     fn print_devices(devices: &[Device], ids: &[Id]) -> Result<()> {
@@ -116,14 +107,14 @@ impl Slight {
             Err(Error::NoDevices)?;
         }
 
-        if ids.is_empty() {
-            devices.iter().for_each(|d| println!("{d}"));
-        } else {
-            devices
-                .iter()
-                .filter(|d| ids.contains(&d.id()))
-                .for_each(|d| println!("{d}"));
-        }
+        ids.is_empty()
+            .then(|| devices.iter().for_each(|d| println!("{d}")))
+            .unwrap_or_else(|| {
+                devices
+                    .iter()
+                    .filter(|d| ids.contains(&d.id()))
+                    .for_each(|d| println!("{d}"));
+            });
 
         Ok(())
     }

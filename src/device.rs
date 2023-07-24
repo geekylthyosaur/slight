@@ -77,18 +77,13 @@ impl Device {
     }
 
     pub fn brightness(&self) -> Brightness {
-        let current = self
-            .0
-            .attribute_value(CURRENT_BRIGHTNESS)
-            .and_then(OsStr::to_str)
-            .and_then(|s| s.parse::<usize>().ok())
-            .unwrap_or_else(|| unreachable!());
-        let max = self
-            .0
-            .attribute_value(MAX_BRIGHTNESS)
-            .and_then(OsStr::to_str)
-            .and_then(|s| s.parse::<usize>().ok())
-            .unwrap_or_else(|| unreachable!());
+        let [current, max] = [CURRENT_BRIGHTNESS, MAX_BRIGHTNESS].map(|s| {
+            self.0
+                .attribute_value(s)
+                .and_then(OsStr::to_str)
+                .and_then(|s| s.parse::<usize>().ok())
+                .unwrap_or_else(|| unreachable!())
+        });
         Brightness::new(current, max)
     }
 

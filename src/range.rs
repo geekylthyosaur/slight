@@ -51,8 +51,18 @@ impl Range {
                     .map_or((self.to(), 1.0), |_| (self.by(), 1.0))
             });
 
+        // FIXME: clone
         let input = chars
             .clone()
+            .peek()
+            .and_then(|&c| {
+                if matches!(c, '-' | '+') {
+                    None
+                } else {
+                    Some(chars.clone())
+                }
+            })
+            .ok_or(Error::InvalidInput)?
             .take_while(|&c| c != '%')
             .collect::<Cow<str>>()
             .parse::<f32>()
@@ -168,10 +178,10 @@ mod tests {
         assert!(r.parse_input("-").is_err());
         assert!(r.parse_input("%").is_err());
         assert!(r.parse_input("+1a%").is_err());
+        assert!(r.parse_input("+-10").is_err());
+        assert!(r.parse_input("-+10").is_err());
 
         // FIXME
-        assert_eq!(r.parse_input("+-10")?, Value::Absolute(10.0, Step::By(r)));
-        assert_eq!(r.parse_input("-+10")?, Value::Absolute(-10.0, Step::By(r)));
         assert_eq!(r.parse_input("10%%")?, Value::Relative(10.0, Step::To(r)));
 
         Ok(())

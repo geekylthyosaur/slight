@@ -11,9 +11,6 @@ pub use crate::{
     error::{Error, Result},
     range::Input,
 };
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::Path;
 
 /// Default value for exponent when using `--exponent` flag without given value
 const EXPONENT_DEFAULT: f32 = 4.0;
@@ -108,12 +105,4 @@ impl Slight {
 
         Ok(())
     }
-}
-
-pub(crate) fn check_write_permissions(path: &Path) -> Result<()> {
-    let mut file = File::open(path)?;
-    let mut content = String::new();
-    file.read_to_string(&mut content)?;
-    file.write_all(content.as_bytes())?;
-    Ok(())
 }

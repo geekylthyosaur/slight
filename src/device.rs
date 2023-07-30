@@ -1,6 +1,8 @@
 use dbus::blocking::{BlockingSender, Connection};
 use std::ffi::OsStr;
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::fs::File;
+use std::io::{Read, Write};
 use std::path::Path;
 
 use crate::{
@@ -23,7 +25,7 @@ impl Device {
     }
 
     pub fn set_range(&mut self, mut range: Box<dyn Iterator<Item = usize>>) -> Result<()> {
-        let sysfs_permissions = crate::check_write_permissions(self.path()).is_ok();
+        let sysfs_permissions = self.is_syspath_writable().is_ok();
         range.try_for_each(|v| {
             if sysfs_permissions {
                 self.set_sysfs(v)?;
@@ -91,10 +93,6 @@ impl Device {
         Brightness::new(current, max)
     }
 
-    pub fn path(&self) -> &Path {
-        self.0.syspath()
-    }
-
     pub fn class(&self) -> Class {
         self.0
             .subsystem()
@@ -144,6 +142,14 @@ impl Device {
             })
             .flatten()
             .collect()
+    }
+
+    fn is_syspath_writable(&self) -> Result<()> {
+        let mut file = File::open(self.0.syspath())?;
+        let mut content = String::new();
+        file.read_to_string(&mut content)?;
+        file.write_all(content.as_bytes())?;
+        Ok(())
     }
 }
 

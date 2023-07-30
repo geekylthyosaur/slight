@@ -11,7 +11,8 @@ pub use crate::{
     error::{Error, Result},
     range::Input,
 };
-use nix::unistd;
+use std::fs::File;
+use std::io::{Read, Write};
 use std::path::Path;
 
 /// Default value for exponent when using `--exponent` flag without given value
@@ -109,20 +110,10 @@ impl Slight {
     }
 }
 
-// FIXME: false positive
 pub(crate) fn check_write_permissions(path: &Path) -> Result<()> {
-    let user_groups = unistd::getgroups().map_err(|_| Error::Permission)?;
-    let video_group = unistd::Group::from_name("video")
-        .ok()
-        .flatten()
-        .ok_or(Error::Permission)?
-        .gid;
-    let is_path_writable = path
-        .metadata()
-        .map(|m| !m.permissions().readonly())
-        .map_err(|_| Error::Permission)?;
-
-    (user_groups.contains(&video_group) && is_path_writable)
-        .then_some(())
-        .ok_or(Error::Permission)
+    let mut file = File::open(path)?;
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+    file.write_all(content.as_bytes())?;
+    Ok(())
 }

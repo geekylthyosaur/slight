@@ -45,7 +45,7 @@ pub struct Args {
     verbose: bool,
 }
 
-fn main() -> slight::Result<()> {
+fn main() {
     let args = Args::parse();
 
     let mode = if let Some(ids) = args.list {
@@ -66,9 +66,9 @@ fn main() -> slight::Result<()> {
     slight.verbose(args.verbose);
     slight.stdout(args.stdout);
 
-    slight.run(mode)?;
-
-    Ok(())
+    if let Err(e) = slight.run(mode) {
+        eprintln!("{}", e);
+    }
 }
 
 #[derive(ValueEnum, Clone, Copy)]

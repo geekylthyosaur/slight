@@ -20,7 +20,6 @@ const NO_EXPONENT_DEFAULT: f32 = 1.0;
 /// Default time interval between brightness changes
 pub const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
-#[derive(Clone)]
 pub enum Mode {
     Regular {
         input: Input,
@@ -66,10 +65,8 @@ impl Slight {
     }
 
     pub fn run(&self, mode: Mode) -> Result<()> {
-        let devices = Device::all()
-            .into_iter()
-            .map(Result::unwrap) // TODO: error handling
-            .collect::<Vec<_>>();
+        let devices = Device::all()?;
+        // FIXME: no suitable device on list mode
         let mut device = Device::select(&devices, &self.id)?.clone();
         let curr = device.brightness().current;
         let max = device.brightness().max;
@@ -95,14 +92,14 @@ impl Slight {
             Err(Error::NoDevices)?;
         }
 
-        ids.is_empty()
-            .then(|| devices.iter().for_each(|d| println!("{d}")))
-            .unwrap_or_else(|| {
-                devices
-                    .iter()
-                    .filter(|d| ids.contains(&d.id()))
-                    .for_each(|d| println!("{d}"));
-            });
+        if ids.is_empty() {
+            devices.iter().for_each(|d| println!("{d}"));
+        } else {
+            devices
+                .iter()
+                .filter(|d| ids.contains(&d.id()))
+                .for_each(|d| println!("{d}"));
+        }
 
         Ok(())
     }

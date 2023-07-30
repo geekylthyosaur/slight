@@ -12,7 +12,6 @@ use crate::{
     ToggleState, SLEEP_DURATION_DEFAULT,
 };
 
-const BASE_PATH: &str = "/sys/class";
 const CURRENT_BRIGHTNESS: &str = "brightness";
 const MAX_BRIGHTNESS: &str = "max_brightness";
 
@@ -21,7 +20,9 @@ pub struct Device(udev::Device);
 
 impl Device {
     pub fn new(path: &Path) -> Result<Self> {
-        Ok(Device(udev::Device::from_syspath(path)?))
+        Ok(Device(
+            udev::Device::from_syspath(path).map_err(|e| Error::DeviceBroken(path.into(), e))?,
+        ))
     }
 
     pub fn set_range(&mut self, mut range: Box<dyn Iterator<Item = usize>>) -> Result<()> {
@@ -113,7 +114,7 @@ impl Device {
         }
     }
 
-    pub fn find<'a>(devices: &'a [Device], id: &Id) -> Option<&'a Device> {
+    fn find<'a>(devices: &'a [Device], id: &Id) -> Option<&'a Device> {
         devices.iter().find(|&d| d.id().as_ref() == id.as_ref())
     }
 
@@ -121,25 +122,10 @@ impl Device {
         devices.iter().find(|&d| d.class() == Class::Backlight)
     }
 
-    pub fn all() -> Vec<Result<Self>> {
+    pub fn all() -> Result<Vec<Self>> {
         [Class::Backlight, Class::Led]
             .iter()
-            .flat_map(|&class| {
-                let path = Path::new(BASE_PATH).join(class.filename());
-                path.read_dir()
-                    .map(|v| {
-                        v.filter_map(std::result::Result::ok)
-                            .map(|v| v.file_name().into_string())
-                            .filter_map(std::result::Result::ok)
-                    })
-                    .map(|ids| {
-                        ids.map(|id| {
-                            let path = path.join(id);
-                            Self::new(&path)
-                        })
-                        .collect::<Vec<_>>()
-                    })
-            })
+            .flat_map(|&class| class.scan())
             .flatten()
             .collect()
     }

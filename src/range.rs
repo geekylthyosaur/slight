@@ -68,7 +68,7 @@ impl Range {
 }
 
 impl Input {
-    pub fn iter(self, r: Range) -> Box<dyn Iterator<Item = usize>> {
+    pub fn iter_with(self, r: Range) -> Box<dyn Iterator<Item = usize>> {
         // TODO dedup ends
         // 2 2 1 1 1 1 0 0 0 0 0 0 0 0 -> 2 2 1 1 1 1 0
         match self {
@@ -150,11 +150,11 @@ mod tests {
     fn no_overflow() -> Result<()> {
         let r = Range::new(32, 64, 1.0);
 
-        assert_eq!("100".parse::<Input>()?.iter(r).last(), Some(64));
-        assert_eq!("-100".parse::<Input>()?.iter(r).last(), Some(0));
-        assert_eq!("+100".parse::<Input>()?.iter(r).last(), Some(64));
-        assert_eq!("-100%".parse::<Input>()?.iter(r).last(), Some(0));
-        assert_eq!("+100%".parse::<Input>()?.iter(r).last(), Some(64));
+        assert_eq!("100".parse::<Input>()?.iter_with(r).last(), Some(64));
+        assert_eq!("-100".parse::<Input>()?.iter_with(r).last(), Some(0));
+        assert_eq!("+100".parse::<Input>()?.iter_with(r).last(), Some(64));
+        assert_eq!("-100%".parse::<Input>()?.iter_with(r).last(), Some(0));
+        assert_eq!("+100%".parse::<Input>()?.iter_with(r).last(), Some(64));
 
         Ok(())
     }

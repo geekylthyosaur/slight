@@ -79,13 +79,13 @@ impl Slight {
             Mode::Toggle(toggle_state) => device.toggle(toggle_state),
             Mode::Regular { input } => {
                 let r = Range::new(curr, max, NO_EXPONENT_DEFAULT);
-                let r = input.iter(r);
+                let r = input.iter_with(r);
                 device.set_range(r)
             }
             Mode::Exponential { input, exponent } => {
                 let exponent = exponent.unwrap_or(EXPONENT_DEFAULT);
                 let r = Range::new(curr, max, exponent);
-                let r = input.iter(r);
+                let r = input.iter_with(r);
                 device.set_range(r)
             }
         }

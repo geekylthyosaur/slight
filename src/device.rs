@@ -38,6 +38,17 @@ impl Device {
         })
     }
 
+    pub fn set(&mut self, v: usize) -> Result<()> {
+        let sysfs_permissions = self.is_syspath_writable().is_ok();
+        if sysfs_permissions {
+            self.set_sysfs(v)?;
+        } else {
+            self.set_dbus(v)?;
+        }
+
+        Ok::<(), Error>(())
+    }
+
     pub fn toggle(&mut self, state: Option<ToggleState>) -> Result<()> {
         if self.is_toggleable() {
             let new = if let Some(ToggleState::On) = state {

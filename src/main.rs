@@ -35,6 +35,10 @@ pub struct Args {
     #[clap(short, long, requires("input"))]
     stdout: bool,
 
+    /// Set brightness value of device directly
+    #[clap(short, long, requires("input"), requires("id"))]
+    direct: bool,
+
     /// Toggle value of device with only two available values (0/1)
     #[clap(short, long, conflicts_with("input"), requires("id"))]
     toggle: Option<Option<ToggleState>>,
@@ -53,9 +57,16 @@ fn main() -> slight::Result<()> {
     } else if let Some(toggle) = args.toggle {
         Mode::Toggle(toggle.map(slight::ToggleState::from))
     } else if let Some(input) = args.input {
-        Mode::Regular {
-            input,
-            exponent: args.exponent,
+        if args.direct {
+            Mode::Direct {
+                input,
+                exponent: args.exponent,
+            }
+        } else {
+            Mode::Regular {
+                input,
+                exponent: args.exponent,
+            }
         }
     } else {
         unreachable!()

@@ -26,6 +26,10 @@ pub enum Mode {
         input: Input,
         exponent: Option<Option<f32>>,
     },
+    Direct {
+        input: Input,
+        exponent: Option<Option<f32>>,
+    },
     List(Vec<Id>),
     Toggle(Option<ToggleState>),
 }
@@ -86,6 +90,16 @@ impl Slight {
                 let r = Range::new(curr, max, exponent);
                 let r = input.iter_with(r);
                 device.set_range(r)
+            }
+            Mode::Direct { input, exponent } => {
+                let exponent = match exponent {
+                    None => NO_EXPONENT_DEFAULT,
+                    Some(None) => EXPONENT_DEFAULT,
+                    Some(Some(v)) => v,
+                };
+                let r = Range::new(curr, max, exponent);
+                let r = input.iter_with(r);
+                device.set(r.max().unwrap())
             }
         }
     }

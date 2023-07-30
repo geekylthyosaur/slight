@@ -53,10 +53,9 @@ fn main() -> slight::Result<()> {
     } else if let Some(toggle) = args.toggle {
         Mode::Toggle(toggle.map(slight::ToggleState::from))
     } else if let Some(input) = args.input {
-        if let Some(exponent) = args.exponent {
-            Mode::Exponential { input, exponent }
-        } else {
-            Mode::Regular { input }
+        Mode::Regular {
+            input,
+            exponent: args.exponent,
         }
     } else {
         unreachable!()

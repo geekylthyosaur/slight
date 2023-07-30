@@ -22,8 +22,10 @@ pub const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
 #[derive(Clone)]
 pub enum Mode {
-    Regular { input: Input },
-    Exponential { input: Input, exponent: Option<f32> },
+    Regular {
+        input: Input,
+        exponent: Option<Option<f32>>,
+    },
     List(Vec<Id>),
     Toggle(Option<ToggleState>),
 }
@@ -75,13 +77,12 @@ impl Slight {
         match mode {
             Mode::List(ids) => Self::print_devices(&devices, &ids),
             Mode::Toggle(toggle_state) => device.toggle(toggle_state),
-            Mode::Regular { input } => {
-                let r = Range::new(curr, max, NO_EXPONENT_DEFAULT);
-                let r = input.iter_with(r);
-                device.set_range(r)
-            }
-            Mode::Exponential { input, exponent } => {
-                let exponent = exponent.unwrap_or(EXPONENT_DEFAULT);
+            Mode::Regular { input, exponent } => {
+                let exponent = match exponent {
+                    None => NO_EXPONENT_DEFAULT,
+                    Some(None) => EXPONENT_DEFAULT,
+                    Some(Some(v)) => v,
+                };
                 let r = Range::new(curr, max, exponent);
                 let r = input.iter_with(r);
                 device.set_range(r)

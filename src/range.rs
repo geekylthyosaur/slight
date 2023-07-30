@@ -1,7 +1,7 @@
-use crate::error::{Error, Result};
-use std::borrow::Cow;
+use crate::error::Error;
 use std::cmp::Ordering;
 use std::ops::Neg;
+use std::str::FromStr;
 
 #[cfg_attr(test, derive(Debug, PartialEq))]
 #[derive(Clone, Copy)]
@@ -14,12 +14,13 @@ pub struct Range {
 #[cfg_attr(test, derive(Debug, PartialEq))]
 #[derive(Clone, Copy)]
 pub enum Step {
-    To(Range),
-    By(Range),
+    To,
+    By,
 }
 
 #[cfg_attr(test, derive(Debug, PartialEq))]
-pub enum Value {
+#[derive(Clone)]
+pub enum Input {
     Absolute(f32, Step),
     Relative(f32, Step),
 }
@@ -31,49 +32,6 @@ impl Range {
             exponent,
             max,
         }
-    }
-
-    pub fn try_from_input(self, input: &str) -> Result<Box<dyn Iterator<Item = usize>>> {
-        let range = self.parse_input(input)?;
-
-        Ok(range.iter())
-    }
-
-    fn parse_input(&self, input: &str) -> Result<Value> {
-        let mut chars = input.chars().peekable();
-
-        let (range, sign) = chars
-            .next_if_eq(&'-')
-            .map(|_| (self.by(), -1.0))
-            .unwrap_or_else(|| {
-                chars
-                    .next_if_eq(&'+')
-                    .map_or((self.to(), 1.0), |_| (self.by(), 1.0))
-            });
-
-        // FIXME: clone
-        let input = chars
-            .clone()
-            .peek()
-            .and_then(|&c| {
-                if matches!(c, '-' | '+') {
-                    None
-                } else {
-                    Some(chars.clone())
-                }
-            })
-            .ok_or(Error::InvalidInput)?
-            .take_while(|&c| c != '%')
-            .collect::<Cow<str>>()
-            .parse::<f32>()
-            .map(|v| v.copysign(sign))
-            .map_err(|_| Error::InvalidInput)?;
-
-        Ok(chars
-            .last()
-            .is_some_and(|c| c == '%')
-            .then(|| range.relative(input))
-            .unwrap_or(range.absolute(input)))
     }
 
     fn curr_to_new(self, new: usize) -> Box<dyn Iterator<Item = usize>> {
@@ -109,93 +67,94 @@ impl Range {
     }
 }
 
-impl Value {
-    pub fn iter(self) -> Box<dyn Iterator<Item = usize>> {
+impl Input {
+    pub fn iter(self, r: Range) -> Box<dyn Iterator<Item = usize>> {
         // TODO dedup ends
         // 2 2 1 1 1 1 0 0 0 0 0 0 0 0 -> 2 2 1 1 1 1 0
         match self {
-            Value::Absolute(new, Step::To(r)) => {
+            Input::Absolute(new, Step::To) => {
                 let new = usize::min(new as usize, r.max);
                 r.curr_to_new(new)
             }
-            Value::Absolute(v, Step::By(r)) => {
+            Input::Absolute(v, Step::By) => {
                 let new = r.curr.saturating_add_signed(v as isize);
                 let new = usize::min(new, r.max);
                 r.curr_to_new(new)
             }
-            Value::Relative(percent, Step::To(r)) => {
+            Input::Relative(percent, Step::To) => {
                 let new = r.max as f32 / 100.0 * percent;
                 r.curr_to_new(new as usize)
             }
-            Value::Relative(percent, Step::By(r)) => r.by_percent(percent),
+            Input::Relative(percent, Step::By) => r.by_percent(percent),
         }
     }
 }
 
-impl Range {
-    pub fn to(self) -> Step {
-        Step::To(self)
-    }
+impl FromStr for Input {
+    type Err = Error;
 
-    pub fn by(self) -> Step {
-        Step::By(self)
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let step = if input.starts_with(|c| matches!(c, '-' | '+')) {
+            Step::By
+        } else {
+            Step::To
+        };
+
+        Ok(if let Some(input) = input.strip_suffix('%') {
+            step.relative(input.parse::<f32>()?)
+        } else {
+            step.absolute(input.parse::<f32>()?)
+        })
     }
 }
 
 impl Step {
-    pub fn absolute(self, v: f32) -> Value {
-        Value::Absolute(v, self)
+    pub fn absolute(self, v: f32) -> Input {
+        Input::Absolute(v, self)
     }
 
-    pub fn relative(self, v: f32) -> Value {
-        Value::Relative(v, self)
+    pub fn relative(self, v: f32) -> Input {
+        Input::Relative(v, self)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Range, Result, Step, Value};
+    use super::*;
+    use crate::error::Result;
 
     #[test]
     fn parse_correct_input_ok() -> Result<()> {
-        let r = Range::new(32, 64, 1.0);
-
-        assert_eq!(r.parse_input("10")?, Value::Absolute(10.0, Step::To(r)));
-        assert_eq!(r.parse_input("-10")?, Value::Absolute(-10.0, Step::By(r)));
-        assert_eq!(r.parse_input("+10")?, Value::Absolute(10.0, Step::By(r)));
-        assert_eq!(r.parse_input("10%")?, Value::Relative(10.0, Step::To(r)));
-        assert_eq!(r.parse_input("-10%")?, Value::Relative(-10.0, Step::By(r)));
-        assert_eq!(r.parse_input("+10%")?, Value::Relative(10.0, Step::By(r)));
+        assert_eq!("10".parse::<Input>()?, Input::Absolute(10.0, Step::To));
+        assert_eq!("-10".parse::<Input>()?, Input::Absolute(-10.0, Step::By));
+        assert_eq!("+10".parse::<Input>()?, Input::Absolute(10.0, Step::By));
+        assert_eq!("10%".parse::<Input>()?, Input::Relative(10.0, Step::To));
+        assert_eq!("-10%".parse::<Input>()?, Input::Relative(-10.0, Step::By));
+        assert_eq!("+10%".parse::<Input>()?, Input::Relative(10.0, Step::By));
 
         Ok(())
     }
 
     #[test]
-    fn parse_incorrect_input_err() -> Result<()> {
-        let r = Range::new(32, 64, 1.0);
-
-        assert!(r.parse_input("-%").is_err());
-        assert!(r.parse_input("-").is_err());
-        assert!(r.parse_input("%").is_err());
-        assert!(r.parse_input("+1a%").is_err());
-        assert!(r.parse_input("+-10").is_err());
-        assert!(r.parse_input("-+10").is_err());
-
-        // FIXME
-        assert_eq!(r.parse_input("10%%")?, Value::Relative(10.0, Step::To(r)));
-
-        Ok(())
+    fn parse_incorrect_input_err() {
+        assert!("-%".parse::<Input>().is_err());
+        assert!("-".parse::<Input>().is_err());
+        assert!("%".parse::<Input>().is_err());
+        assert!("+1a%".parse::<Input>().is_err());
+        assert!("+-10".parse::<Input>().is_err());
+        assert!("-+10".parse::<Input>().is_err());
+        assert!("10%%".parse::<Input>().is_err());
     }
 
     #[test]
     fn no_overflow() -> Result<()> {
         let r = Range::new(32, 64, 1.0);
 
-        assert_eq!(r.try_from_input("100")?.last(), Some(64));
-        assert_eq!(r.try_from_input("-100")?.last(), Some(0));
-        assert_eq!(r.try_from_input("+100")?.last(), Some(64));
-        assert_eq!(r.try_from_input("-100%")?.last(), Some(0));
-        assert_eq!(r.try_from_input("+100%")?.last(), Some(64));
+        assert_eq!("100".parse::<Input>()?.iter(r).last(), Some(64));
+        assert_eq!("-100".parse::<Input>()?.iter(r).last(), Some(0));
+        assert_eq!("+100".parse::<Input>()?.iter(r).last(), Some(64));
+        assert_eq!("-100%".parse::<Input>()?.iter(r).last(), Some(0));
+        assert_eq!("+100%".parse::<Input>()?.iter(r).last(), Some(64));
 
         Ok(())
     }

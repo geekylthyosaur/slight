@@ -1,15 +1,15 @@
-use thiserror::Error;
+use crate::{brightness::Brightness, device::Id};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
     IoError(#[from] std::io::Error),
-    #[error("Invalid input!")]
-    InvalidInput,
-    #[error("Cannot toggle '{}' as it can have more than two values ({}/{})!", .0.id(), .0.brightness().current, .0.brightness().max)]
-    CannotToggle(crate::device::Device),
+    #[error(transparent)]
+    ParseFloatError(#[from] std::num::ParseFloatError),
+    #[error("Cannot toggle '{}' as it can have more than two values ({}/{})!", .id, .brightness.current, .brightness.max)]
+    CannotToggle { id: Id, brightness: Brightness },
     #[error(transparent)]
     Dbus(#[from] dbus::Error),
     #[error("No devices found!")]

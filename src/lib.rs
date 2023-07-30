@@ -2,14 +2,14 @@
 mod brightness;
 mod class;
 mod device;
-pub mod error;
+mod error;
 mod range;
 
-pub use crate::device::Id;
-use crate::{
-    device::Device,
+use crate::{device::Device, range::Range};
+pub use crate::{
+    device::Id,
     error::{Error, Result},
-    range::Range,
+    range::Input,
 };
 use nix::unistd;
 use std::path::Path;
@@ -24,13 +24,8 @@ pub const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 
 #[derive(Clone)]
 pub enum Mode {
-    Regular {
-        input: String,
-    },
-    Exponential {
-        input: String,
-        exponent: Option<f32>,
-    },
+    Regular { input: Input },
+    Exponential { input: Input, exponent: Option<f32> },
     List(Vec<Id>),
     Toggle(Option<ToggleState>),
 }
@@ -50,15 +45,13 @@ struct Flags {
 }
 
 pub struct Slight {
-    mode: Mode,
     id: Option<Id>,
     flags: Flags,
 }
 
 impl Slight {
-    pub fn new(id: impl Into<Option<Id>>, mode: Mode) -> Slight {
+    pub fn new(id: impl Into<Option<Id>>) -> Slight {
         Slight {
-            mode,
             id: id.into(),
             flags: Flags::default(),
         }
@@ -72,27 +65,27 @@ impl Slight {
         self.flags.stdout = v;
     }
 
-    pub fn run(self) -> Result<()> {
+    pub fn run(&self, mode: Mode) -> Result<()> {
         let devices = Device::all()
             .into_iter()
             .map(Result::unwrap) // TODO: error handling
             .collect::<Vec<_>>();
-        let mut device = Device::select(&devices, self.id)?.clone();
+        let mut device = Device::select(&devices, &self.id)?.clone();
         let curr = device.brightness().current;
         let max = device.brightness().max;
 
-        match self.mode {
+        match mode {
             Mode::List(ids) => Self::print_devices(&devices, &ids),
             Mode::Toggle(toggle_state) => device.toggle(toggle_state),
             Mode::Regular { input } => {
                 let r = Range::new(curr, max, NO_EXPONENT_DEFAULT);
-                let r = r.try_from_input(input.as_ref())?;
+                let r = input.iter(r);
                 device.set_range(r)
             }
             Mode::Exponential { input, exponent } => {
                 let exponent = exponent.unwrap_or(EXPONENT_DEFAULT);
                 let r = Range::new(curr, max, exponent);
-                let r = r.try_from_input(input.as_ref())?;
+                let r = input.iter(r);
                 device.set_range(r)
             }
         }
@@ -116,6 +109,7 @@ impl Slight {
     }
 }
 
+// FIXME: false positive
 pub(crate) fn check_write_permissions(path: &Path) -> Result<()> {
     let user_groups = unistd::getgroups().map_err(|_| Error::Permission)?;
     let video_group = unistd::Group::from_name("video")

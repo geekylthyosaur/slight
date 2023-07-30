@@ -23,8 +23,9 @@ impl Device {
     }
 
     pub fn set_range(&mut self, mut range: Box<dyn Iterator<Item = usize>>) -> Result<()> {
+        let sysfs_permissions = crate::check_write_permissions(self.path()).is_ok();
         range.try_for_each(|v| {
-            if crate::check_write_permissions(self.path()).is_ok() {
+            if sysfs_permissions {
                 self.set_sysfs(v)?;
             } else {
                 self.set_dbus(v)?;
@@ -46,7 +47,10 @@ impl Device {
             };
             self.set_range(Box::new(std::iter::once(new)))
         } else {
-            Err(Error::CannotToggle(self.to_owned()))
+            Err(Error::CannotToggle {
+                id: self.id(),
+                brightness: self.brightness(),
+            })
         }
     }
 
@@ -103,9 +107,9 @@ impl Device {
         self.0.sysname().to_string_lossy().to_string().into()
     }
 
-    pub fn select(devices: &[Device], id: Option<Id>) -> Result<&Device> {
+    pub fn select<'a>(devices: &'a [Device], id: &Option<Id>) -> Result<&'a Device> {
         if let Some(id) = id {
-            Self::find(devices, &id).ok_or(Error::SpecifiedDeviceNotFound)
+            Self::find(devices, id).ok_or(Error::SpecifiedDeviceNotFound)
         } else {
             Self::find_default(devices).ok_or(Error::SuitableDeviceNotFound)
         }

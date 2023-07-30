@@ -1,6 +1,6 @@
-use slight::{Id, Mode, Slight};
+use slight::{Id, Input, Mode, Slight};
 
-use clap::{Parser, ValueEnum};
+use clap::{value_parser, Parser, ValueEnum};
 
 /// Utility to control backlight brightness smoothly
 #[derive(Parser)]
@@ -20,8 +20,8 @@ pub struct Args {
     /// - set exact relative brightness value: `n%`;
     ///
     /// - increase/decrease current brightness by relative value: `+n%`/`-n%`.
-    #[clap(allow_hyphen_values(true))]
-    input: Option<String>,
+    #[clap(allow_hyphen_values(true), value_parser = value_parser!(Input))]
+    input: Option<Input>,
 
     /// List all available devices or the ones with given id
     #[clap(short, long, conflicts_with("input"), num_args = 0.., value_delimiter = ' ')]
@@ -45,7 +45,7 @@ pub struct Args {
     verbose: bool,
 }
 
-fn main() -> slight::error::Result<()> {
+fn main() -> slight::Result<()> {
     let args = Args::parse();
 
     let mode = if let Some(ids) = args.list {
@@ -62,12 +62,12 @@ fn main() -> slight::error::Result<()> {
         unreachable!()
     };
 
-    let mut slight = Slight::new(args.id, mode);
+    let mut slight = Slight::new(args.id);
 
     slight.verbose(args.verbose);
     slight.stdout(args.stdout);
 
-    slight.run()?;
+    slight.run(mode)?;
 
     Ok(())
 }

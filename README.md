@@ -15,7 +15,7 @@ Full-featured Linux utility to control backlight brightness.
 
 - ***Explore Available Devices***: Curious about the devices at your disposal? Use `--list [<LIST>...]` to unveil all available devices or view specific ones by providing their IDs.
 
-- ***Illuminating Exponentials***: Want a more granular brightness adjustment? The `--exponent [<EXPONENT>]` option enables you to use exponential ranges, providing fine-tuned control. Don't worry; if you don't specify an exponent, we'll gracefully apply the default value of `4.0`.
+- ***Illuminating Exponentials***: Ever noticed how adjusting brightness from 0% to 5% feels like turning on a spotlight, while going from 95% to 100% is barely noticeable? It's all because of how our eyes work! But no worries, I've got your back with an awesome solution – introducing the `--exponent [<EXPONENT>]` option! Now, you can fine-tune brightness like a boss! This mode makes sure the brightness changes are consistent, making both the 0% to 5% and 95% to 100% transitions equally noticeable. Don't give any specific exponent? I've got the default value of `4.0` set up for you! So go ahead, play with those illuminating exponentials and enjoy the perfect glow!
 
 - ***Flexible Output Options***: Choose your preferred destination for brightness adjustments. Whether you want to keep an eye on the changes in your terminal or utilize system file operations, we've got you covered with the `--stdout` option.
 

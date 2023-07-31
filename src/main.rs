@@ -35,7 +35,7 @@ pub struct Args {
     #[clap(short, long, requires("input"))]
     max_iter: Option<usize>,
 
-    /// Write to stdout instead of sysfs
+    /// Write to stdout instead of sysfs  (Is not implemented yet)
     #[clap(short, long, requires("input"))]
     stdout: bool,
 
@@ -43,7 +43,7 @@ pub struct Args {
     #[clap(short, long, conflicts_with("input"), requires("id"))]
     toggle: Option<Option<ToggleState>>,
 
-    /// Being verbose about what is going on
+    /// Being verbose about what is going on (Is not implemented yet)
     // FIXME: unreachable
     #[clap(short, long)]
     verbose: bool,

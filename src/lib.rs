@@ -68,6 +68,10 @@ impl Slight {
     }
 
     pub fn run(&self, mode: Mode) -> Result<()> {
+        // FIXME
+        self.flags.verbose.then(|| unimplemented!());
+        self.flags.stdout.then(|| unimplemented!());
+
         let devices = Device::all()?;
         // FIXME: no suitable device on list mode
         let mut device = Device::select(&devices, &self.id)?.clone();

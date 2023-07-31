@@ -1,7 +1,7 @@
 use dbus::blocking::{BlockingSender, Connection};
 use std::ffi::OsStr;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
 
@@ -145,7 +145,10 @@ impl Device {
     }
 
     fn is_syspath_writable(&self) -> Result<()> {
-        let mut file = File::open(self.0.syspath())?;
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(self.0.syspath().join(CURRENT_BRIGHTNESS))?;
         let mut content = String::new();
         file.read_to_string(&mut content)?;
         file.write_all(content.as_bytes())?;

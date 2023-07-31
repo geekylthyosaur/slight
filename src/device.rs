@@ -26,12 +26,14 @@ impl Device {
     }
 
     pub fn set_range(&mut self, mut range: Box<dyn Iterator<Item = usize>>) -> Result<()> {
+        // FIXME: dbus connection is required to set brightness using sysfs
         let sysfs_permissions = self.is_syspath_writable().is_ok();
+        let conn = Connection::new_system()?;
         range.try_for_each(|v| {
             if sysfs_permissions {
                 self.set_sysfs(v)?;
             } else {
-                self.set_dbus(v)?;
+                self.set_dbus(v, &conn)?;
             }
 
             std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
@@ -67,8 +69,7 @@ impl Device {
             .set_attribute_value(CURRENT_BRIGHTNESS, value.to_string())?)
     }
 
-    fn set_dbus(&mut self, value: usize) -> Result<()> {
-        let conn = Connection::new_system()?;
+    fn set_dbus(&mut self, value: usize, conn: &Connection) -> Result<()> {
         let msg = dbus::Message::new_method_call(
             "org.freedesktop.login1",
             "/org/freedesktop/login1/session/auto",

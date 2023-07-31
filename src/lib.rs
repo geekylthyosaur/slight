@@ -19,11 +19,14 @@ const NO_EXPONENT_DEFAULT: f32 = 1.0;
 // TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
 /// Default time interval between brightness changes
 pub const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
+/// Default value of smooth transition iterations
+pub const MAX_ITER_DEFAULT: usize = 10;
 
 pub enum Mode {
     Regular {
         input: Input,
         exponent: Option<Option<f32>>,
+        max_iter: Option<usize>,
     },
     List(Vec<Id>),
     Toggle(Option<ToggleState>),
@@ -74,13 +77,17 @@ impl Slight {
         match mode {
             Mode::List(ids) => Self::print_devices(&devices, &ids),
             Mode::Toggle(toggle_state) => device.toggle(toggle_state),
-            Mode::Regular { input, exponent } => {
+            Mode::Regular {
+                input,
+                exponent,
+                max_iter,
+            } => {
                 let exponent = match exponent {
                     None => NO_EXPONENT_DEFAULT,
                     Some(None) => EXPONENT_DEFAULT,
                     Some(Some(v)) => v,
                 };
-                let r = Range::new(curr, max, exponent);
+                let r = Range::new(curr, max, exponent, max_iter.unwrap_or(MAX_ITER_DEFAULT));
                 let r = input.iter_with(r);
                 device.set_range(r)
             }

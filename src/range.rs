@@ -9,6 +9,7 @@ pub struct Range {
     curr: usize,
     exponent: f32,
     max: usize,
+    max_iter: usize,
 }
 
 #[cfg_attr(test, derive(Debug, PartialEq))]
@@ -26,11 +27,12 @@ pub enum Input {
 }
 
 impl Range {
-    pub fn new(curr: usize, max: usize, exponent: f32) -> Self {
+    pub fn new(curr: usize, max: usize, exponent: f32, max_iter: usize) -> Self {
         Self {
             curr,
             exponent,
             max,
+            max_iter,
         }
     }
 
@@ -68,10 +70,11 @@ impl Range {
 }
 
 impl Input {
+    #[must_use]
     pub fn iter_with(self, r: Range) -> Box<dyn Iterator<Item = usize>> {
         // TODO dedup ends
         // 2 2 1 1 1 1 0 0 0 0 0 0 0 0 -> 2 2 1 1 1 1 0
-        match self {
+        let i: Box<dyn Iterator<Item = usize>> = match self {
             Input::Absolute(new, Step::To) => {
                 let new = usize::min(new as usize, r.max);
                 r.curr_to_new(new)
@@ -86,6 +89,22 @@ impl Input {
                 r.curr_to_new(new as usize)
             }
             Input::Relative(percent, Step::By) => r.by_percent(percent),
+        };
+
+        let v = i.collect::<Vec<_>>();
+
+        let source_len = v.len();
+        let target_len = r.max_iter - 1; // Saving space for last item
+        let step = usize::max(1, ((source_len + target_len) / target_len) - 1);
+        if let Some(&last) = v.last() {
+            Box::new(
+                v.into_iter()
+                    .step_by(step)
+                    .take(target_len)
+                    .chain(std::iter::once(last)),
+            )
+        } else {
+            Box::new(std::iter::empty())
         }
     }
 }
@@ -148,7 +167,7 @@ mod tests {
 
     #[test]
     fn no_overflow() -> Result<()> {
-        let r = Range::new(32, 64, 1.0);
+        let r = Range::new(32, 64, 1.0, 10);
 
         assert_eq!("100".parse::<Input>()?.iter_with(r).last(), Some(64));
         assert_eq!("-100".parse::<Input>()?.iter_with(r).last(), Some(0));

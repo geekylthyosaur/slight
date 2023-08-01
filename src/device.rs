@@ -1,4 +1,5 @@
 use dbus::blocking::{BlockingSender, Connection};
+use std::cell::OnceCell;
 use std::ffi::OsStr;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::fs::OpenOptions;
@@ -26,14 +27,19 @@ impl Device {
     }
 
     pub fn set_range(&mut self, mut range: Box<dyn Iterator<Item = usize>>) -> Result<()> {
-        // FIXME: dbus connection is required to set brightness using sysfs
         let sysfs_permissions = self.is_syspath_writable().is_ok();
-        let conn = Connection::new_system()?;
+        let conn = OnceCell::new();
         range.try_for_each(|v| {
             if sysfs_permissions {
                 self.set_sysfs(v)?;
             } else {
-                self.set_dbus(v, &conn)?;
+                // FIXME: #![feature(once_cell_try)]
+                self.set_dbus(
+                    v,
+                    conn.get_or_init(Connection::new_system)
+                        .as_ref()
+                        .map_err(|e| dbus::Error::new_failed(e.message().unwrap()))?,
+                )?;
             }
 
             std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));

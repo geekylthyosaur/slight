@@ -5,6 +5,7 @@ mod device;
 mod error;
 mod range;
 
+use crate::range::LimitLenExt;
 use crate::{device::Device, range::Range};
 pub use crate::{
     device::Id,
@@ -91,7 +92,8 @@ impl Slight {
                     Some(None) => EXPONENT_DEFAULT,
                     Some(Some(v)) => v,
                 };
-                let r = Range::new(curr, max, exponent, max_iter.unwrap_or(MAX_ITER_DEFAULT));
+                let max_iter = max_iter.unwrap_or(MAX_ITER_DEFAULT);
+                let r = Range::new(curr, max, exponent, max_iter);
                 let r = input.iter_with(r);
                 device.set_range(r)
             }

@@ -94,8 +94,12 @@ impl Input {
         let v = i.collect::<Vec<_>>();
 
         let source_len = v.len();
-        let target_len = r.max_iter - 1; // Saving space for last item
-        let step = usize::max(1, ((source_len + target_len) / target_len) - 1);
+        let target_len = r.max_iter.saturating_sub(1);
+        let step = (source_len + target_len)
+            .checked_div(target_len)
+            .unwrap_or_default()
+            .saturating_sub(1)
+            .max(1);
         if let Some(&last) = v.last() {
             Box::new(
                 v.into_iter()

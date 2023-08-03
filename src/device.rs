@@ -16,7 +16,7 @@ use crate::{
 const CURRENT_BRIGHTNESS: &str = "brightness";
 const MAX_BRIGHTNESS: &str = "max_brightness";
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Device(udev::Device);
 
 impl Device {
@@ -49,12 +49,10 @@ impl Device {
 
     pub fn toggle(&mut self, state: Option<ToggleState>) -> Result<()> {
         if self.is_toggleable() {
-            let new = if let Some(ToggleState::On) = state {
-                self.brightness().max
-            } else if let Some(ToggleState::Off) = state {
-                usize::MIN
-            } else {
-                self.brightness().current ^ 1
+            let new = match state {
+                Some(ToggleState::On) => self.brightness().max,
+                Some(ToggleState::Off) => usize::MIN,
+                None => self.brightness().current ^ 1,
             };
             self.set_range(Box::new(std::iter::once(new)))
         } else {
@@ -113,20 +111,19 @@ impl Device {
         self.0.sysname().to_string_lossy().to_string().into()
     }
 
-    pub fn select<'a>(devices: &'a [Device], id: &Option<Id>) -> Result<&'a Device> {
-        if let Some(id) = id {
-            Self::find(devices, id).ok_or(Error::SpecifiedDeviceNotFound)
-        } else {
-            Self::find_default(devices).ok_or(Error::SuitableDeviceNotFound)
+    pub fn select<'a>(devices: &'a mut [Device], id: Option<&Id>) -> Result<&'a mut Device> {
+        match id {
+            Some(id) => Self::find(devices, id).ok_or(Error::SpecifiedDeviceNotFound),
+            None => Self::find_default(devices).ok_or(Error::SuitableDeviceNotFound),
         }
     }
 
-    fn find<'a>(devices: &'a [Device], id: &Id) -> Option<&'a Device> {
-        devices.iter().find(|&d| d.id().as_ref() == id.as_ref())
+    fn find<'a>(devices: &'a mut [Device], id: &Id) -> Option<&'a mut Device> {
+        devices.iter_mut().find(|d| d.id().as_ref() == id.as_ref())
     }
 
-    fn find_default(devices: &[Device]) -> Option<&Device> {
-        devices.iter().find(|&d| d.class() == Class::Backlight)
+    fn find_default(devices: &mut [Device]) -> Option<&mut Device> {
+        devices.iter_mut().find(|d| d.class() == Class::Backlight)
     }
 
     pub fn all() -> Result<Vec<Self>> {

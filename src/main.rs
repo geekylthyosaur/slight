@@ -32,8 +32,8 @@ pub struct Args {
     exponent: Option<Option<f32>>,
 
     /// Create smooth transition with at most <value> iterations
-    #[clap(short, long, requires("input"))]
-    max_iter: Option<usize>,
+    #[clap(short, long, requires("input"), value_parser(1..))]
+    max_iter: Option<i64>,
 
     /// Write to stdout instead of sysfs  (Is not implemented yet)
     #[clap(short, long, requires("input"))]
@@ -60,7 +60,7 @@ fn main() {
         Mode::Regular {
             input,
             exponent: args.exponent,
-            max_iter: args.max_iter,
+            max_iter: args.max_iter.map(|v| v as usize),
         }
     } else {
         unreachable!()

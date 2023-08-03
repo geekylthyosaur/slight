@@ -72,9 +72,9 @@ impl Slight {
         self.flags.verbose.then(|| unimplemented!());
         self.flags.stdout.then(|| unimplemented!());
 
-        let devices = Device::all()?;
+        let mut devices = Device::all()?;
         // FIXME: no suitable device on list mode
-        let mut device = Device::select(&devices, &self.id)?.clone();
+        let device = Device::select(&mut devices, self.id.as_ref())?;
         let curr = device.brightness().current;
         let max = device.brightness().max;
 
@@ -91,7 +91,11 @@ impl Slight {
                     Some(None) => EXPONENT_DEFAULT,
                     Some(Some(v)) => v,
                 };
-                let r = Range::new(curr, max, exponent, max_iter.unwrap_or(MAX_ITER_DEFAULT));
+                let max_iter = max_iter.map_or(MAX_ITER_DEFAULT, |v| {
+                    assert!(v > 0);
+                    v
+                });
+                let r = Range::new(curr, max, exponent, max_iter);
                 let r = input.iter_with(r);
                 device.set_range(r)
             }

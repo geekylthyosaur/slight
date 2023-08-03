@@ -1,7 +1,7 @@
-use crate::{device::Device, error::Result};
-
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::Path;
+
+use crate::{device::Device, error::Result};
 
 const BASE_PATH: &str = "/sys/class";
 
@@ -12,8 +12,10 @@ pub enum Class {
 }
 
 impl Class {
+    #[tracing::instrument]
     pub fn scan(self) -> Result<Vec<Result<Device>>> {
         let path = Path::new(BASE_PATH).join(self.filename());
+        tracing::info!("{path:?}");
         Ok(path
             .read_dir()
             .map(|v| {
@@ -24,6 +26,7 @@ impl Class {
             .map(|ids| {
                 ids.map(|id| {
                     let path = path.join(id);
+                    tracing::info!("{path:?}");
                     Device::new(&path)
                 })
                 .collect::<Vec<_>>()

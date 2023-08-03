@@ -12,15 +12,15 @@ pub struct Range {
     max_iter: usize,
 }
 
-#[cfg_attr(test, derive(Debug, PartialEq))]
-#[derive(Clone, Copy)]
+#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Copy)]
 pub enum Step {
     To,
     By,
 }
 
-#[cfg_attr(test, derive(Debug, PartialEq))]
-#[derive(Clone)]
+#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone)]
 pub enum Input {
     Absolute(f32, Step),
     Relative(f32, Step),

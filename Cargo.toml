@@ -16,3 +16,5 @@ clap = { version = "4.1.4", default-features = false, features = ["std", "help",
 thiserror = { version = "1.0.40", default-features = false }
 udev = { version = "0.7.0", default-features = false }
 dbus = { version = "0.9.7", default-features = false }
+tracing = { version = "0.1.37", default-features = false, features = ["attributes"] }
+tracing-subscriber = { version = "0.3.17", default-features = false, features = ["ansi", "fmt", "env-filter"] }

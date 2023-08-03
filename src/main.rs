@@ -35,15 +35,15 @@ pub struct Args {
     #[clap(short, long, requires("input"), value_parser(1..))]
     max_iter: Option<i64>,
 
-    /// Write to stdout instead of sysfs  (Is not implemented yet)
-    #[clap(short, long, requires("input"))]
-    stdout: bool,
+    /// Pretend setting brightness
+    #[clap(short, long)]
+    pretend: bool,
 
     /// Toggle value of device with only two available values (0/1)
     #[clap(short, long, conflicts_with("input"), requires("id"))]
     toggle: Option<Option<ToggleState>>,
 
-    /// Being verbose about what is going on (Is not implemented yet)
+    /// Being verbose about what is going on
     // FIXME: unreachable
     #[clap(short, long)]
     verbose: bool,
@@ -51,6 +51,16 @@ pub struct Args {
 
 fn main() {
     let args = Args::parse();
+
+    // FIXME
+    if args.verbose {
+        let env_filter = tracing_subscriber::EnvFilter::from_default_env();
+        tracing_subscriber::fmt()
+            .compact()
+            .without_time()
+            .with_env_filter(env_filter)
+            .init();
+    }
 
     let mode = if let Some(ids) = args.list {
         Mode::List(ids)
@@ -68,11 +78,12 @@ fn main() {
 
     let mut slight = Slight::new(args.id);
 
-    slight.verbose(args.verbose);
-    slight.stdout(args.stdout);
+    slight.set_verbose(args.verbose);
+    slight.set_pretend(args.pretend);
 
     if let Err(e) = slight.run(mode) {
-        eprintln!("{}", e);
+        tracing::error!("{}", e);
+        eprintln!("{e}");
     }
 }
 

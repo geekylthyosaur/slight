@@ -22,6 +22,7 @@ pub const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
 /// Default value of smooth transition iterations
 pub const MAX_ITER_DEFAULT: usize = 10;
 
+#[derive(Debug)]
 pub enum Mode {
     Regular {
         input: Input,
@@ -32,7 +33,7 @@ pub enum Mode {
     Toggle(Option<ToggleState>),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum ToggleState {
     On,
     Off,
@@ -40,8 +41,8 @@ pub enum ToggleState {
 
 #[derive(Default)]
 struct Flags {
-    /// Write to `stdout` instead of `sysfs`
-    pub stdout: bool,
+    /// Pretend setting brightness
+    pub pretend: bool,
     /// Being verbose about what is going on
     pub verbose: bool,
 }
@@ -59,19 +60,18 @@ impl Slight {
         }
     }
 
-    pub fn verbose(&mut self, v: bool) {
-        self.flags.verbose = v;
+    #[tracing::instrument(skip(self))]
+    pub fn set_verbose(&mut self, verbose: bool) {
+        self.flags.verbose = verbose;
     }
 
-    pub fn stdout(&mut self, v: bool) {
-        self.flags.stdout = v;
+    #[tracing::instrument(skip(self))]
+    pub fn set_pretend(&mut self, pretend: bool) {
+        self.flags.pretend = pretend;
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn run(&self, mode: Mode) -> Result<()> {
-        // FIXME
-        self.flags.verbose.then(|| unimplemented!());
-        self.flags.stdout.then(|| unimplemented!());
-
         let mut devices = Device::all()?;
         // FIXME: no suitable device on list mode
         let device = Device::select(&mut devices, self.id.as_ref())?;
@@ -80,7 +80,7 @@ impl Slight {
 
         match mode {
             Mode::List(ids) => Self::print_devices(&devices, &ids),
-            Mode::Toggle(toggle_state) => device.toggle(toggle_state),
+            Mode::Toggle(toggle_state) => device.toggle(toggle_state, self.flags.pretend),
             Mode::Regular {
                 input,
                 exponent,
@@ -91,17 +91,18 @@ impl Slight {
                     Some(None) => EXPONENT_DEFAULT,
                     Some(Some(v)) => v,
                 };
-                let max_iter = max_iter.map_or(MAX_ITER_DEFAULT, |v| {
-                    assert!(v > 0);
-                    v
+                let max_iter = max_iter.map_or(MAX_ITER_DEFAULT, |max_iter| {
+                    assert!(max_iter > 0);
+                    max_iter
                 });
                 let r = Range::new(curr, max, exponent, max_iter);
                 let r = input.iter_with(r);
-                device.set_range(r)
+                device.set_range(r, self.flags.pretend)
             }
         }
     }
 
+    #[tracing::instrument(skip(devices))]
     fn print_devices(devices: &[Device], ids: &[Id]) -> Result<()> {
         if devices.is_empty() {
             Err(Error::NoDevices)?;

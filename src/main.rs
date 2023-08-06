@@ -11,15 +11,15 @@ pub struct Args {
     #[clap(short, long, requires("input"))]
     id: Option<Id>,
 
-    /// Input string to control backlight brightness
+    /// Input string to control backlight brightness of specified or default device
     ///
-    /// - set exact absolute brightness value: `n`;
+    /// - `n`: set exact absolute brightness value;
     ///
-    /// - increase/decrease current brightness by absolute value: `+n`/`-n`;
+    /// - `+n`/`-n`: increase/decrease current brightness by absolute value;
     ///
-    /// - set exact relative brightness value: `n%`;
+    /// - `n%`: set exact relative brightness value;
     ///
-    /// - increase/decrease current brightness by relative value: `+n%`/`-n%`.
+    /// - `+n%`/`-n%`: increase/decrease current brightness by relative value.
     #[clap(allow_hyphen_values(true), value_parser = value_parser!(Input))]
     input: Option<Input>,
 

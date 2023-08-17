@@ -5,6 +5,8 @@ mod device;
 mod error;
 mod range;
 
+use std::time::Duration;
+
 use crate::{device::Device, range::Range};
 pub use crate::{
     device::Id,
@@ -16,9 +18,8 @@ pub use crate::{
 const EXPONENT_DEFAULT: f32 = 4.0;
 /// Default value for exponent when `--exponent` flag was not provided
 const NO_EXPONENT_DEFAULT: f32 = 1.0;
-// TODO: std::time::Duration::from_secs_f32 is not stable as const fn yet
 /// Default time interval between brightness changes
-pub const SLEEP_DURATION_DEFAULT: f32 = 1.0 / 30.0;
+pub const SLEEP_DURATION_DEFAULT: Duration = Duration::from_millis(33);
 /// Default value of smooth transition iterations
 pub const MAX_ITER_DEFAULT: usize = 10;
 

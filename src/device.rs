@@ -49,7 +49,7 @@ impl Device {
                 )?;
             }
 
-            std::thread::sleep(std::time::Duration::from_secs_f32(SLEEP_DURATION_DEFAULT));
+            std::thread::sleep(SLEEP_DURATION_DEFAULT);
             Ok::<(), Error>(())
         })
     }

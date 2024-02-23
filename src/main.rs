@@ -1,6 +1,6 @@
-use slight::{Id, Input, Mode, Slight};
+use slight::{Id, Input, Mode, Slight, ToggleState};
 
-use clap::{value_parser, Parser, ValueEnum};
+use clap::{value_parser, Parser};
 
 /// Utility to control backlight brightness smoothly
 #[derive(Parser)]
@@ -40,7 +40,7 @@ pub struct Args {
     pretend: bool,
 
     /// Toggle value of device with only two available values (0/1)
-    #[clap(short, long, conflicts_with("input"), requires("id"))]
+    #[clap(short, long, conflicts_with("input"), requires("id"), value_parser = value_parser!(ToggleState))]
     toggle: Option<Option<ToggleState>>,
 
     /// Being verbose about what is going on
@@ -65,7 +65,7 @@ fn main() {
     let mode = if let Some(ids) = args.list {
         Mode::List(ids)
     } else if let Some(toggle) = args.toggle {
-        Mode::Toggle(toggle.map(slight::ToggleState::from))
+        Mode::Toggle(toggle)
     } else if let Some(input) = args.input {
         Mode::Regular {
             input,
@@ -84,20 +84,5 @@ fn main() {
     if let Err(e) = slight.run(mode) {
         tracing::error!("{}", e);
         eprintln!("{e}");
-    }
-}
-
-#[derive(ValueEnum, Clone, Copy)]
-enum ToggleState {
-    On,
-    Off,
-}
-
-impl From<ToggleState> for slight::ToggleState {
-    fn from(value: ToggleState) -> Self {
-        match value {
-            ToggleState::On => slight::ToggleState::On,
-            ToggleState::Off => slight::ToggleState::Off,
-        }
     }
 }

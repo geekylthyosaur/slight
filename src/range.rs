@@ -20,7 +20,7 @@ pub enum Step {
 }
 
 #[cfg_attr(test, derive(PartialEq))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Input {
     Absolute(f32, Step),
     Relative(f32, Step),

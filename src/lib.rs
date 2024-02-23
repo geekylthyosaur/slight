@@ -61,17 +61,14 @@ impl Slight {
         }
     }
 
-    #[tracing::instrument(skip(self))]
     pub fn set_verbose(&mut self, verbose: bool) {
         self.flags.verbose = verbose;
     }
 
-    #[tracing::instrument(skip(self))]
     pub fn set_pretend(&mut self, pretend: bool) {
         self.flags.pretend = pretend;
     }
 
-    #[tracing::instrument(skip(self))]
     pub fn run(&self, mode: Mode) -> Result<()> {
         let mut devices = Device::all()?;
         // FIXME: no suitable device on list mode
@@ -103,14 +100,15 @@ impl Slight {
         }
     }
 
-    #[tracing::instrument(skip(devices))]
     fn print_devices(devices: &[Device], ids: &[Id]) -> Result<()> {
         if devices.is_empty() {
             Err(Error::NoDevices)?;
         }
 
         if ids.is_empty() {
-            devices.iter().for_each(|d| println!("{d}"));
+            for dev in devices {
+                println!("{dev}");
+            }
         } else {
             devices
                 .iter()
@@ -119,5 +117,15 @@ impl Slight {
         }
 
         Ok(())
+    }
+}
+
+impl From<String> for ToggleState {
+    fn from(s: String) -> Self {
+        match s.to_lowercase().as_str() {
+            "on" => ToggleState::On,
+            "off" => ToggleState::Off,
+            _ => panic!(),
+        }
     }
 }

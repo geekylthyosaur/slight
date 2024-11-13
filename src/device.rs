@@ -20,14 +20,12 @@ const MAX_BRIGHTNESS: &str = "max_brightness";
 pub struct Device(udev::Device);
 
 impl Device {
-    #[tracing::instrument(ret, level = "debug")]
     pub fn new(path: &Path) -> Result<Self> {
         Ok(Device(
             udev::Device::from_syspath(path).map_err(|e| Error::DeviceBroken(path.into(), e))?,
         ))
     }
 
-    #[tracing::instrument(skip(self, range))]
     pub fn set_range(
         &mut self,
         mut range: Box<dyn Iterator<Item = usize>>,
@@ -54,7 +52,6 @@ impl Device {
         })
     }
 
-    #[tracing::instrument(skip(self))]
     pub fn toggle(&mut self, state: Option<ToggleState>, pretend: bool) -> Result<()> {
         if self.is_toggleable() {
             let new = match state {
@@ -71,12 +68,10 @@ impl Device {
         }
     }
 
-    #[tracing::instrument(skip(self), ret)]
     fn is_toggleable(&self) -> bool {
         self.brightness().max == 1
     }
 
-    #[tracing::instrument(skip(self))]
     fn set_sysfs(&mut self, value: usize, pretend: bool) -> Result<()> {
         if !pretend {
             self.0
@@ -85,7 +80,6 @@ impl Device {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, conn))]
     fn set_dbus(&mut self, value: usize, conn: &Connection, pretend: bool) -> Result<()> {
         let msg = dbus::Message::new_method_call(
             "org.freedesktop.login1",
@@ -103,7 +97,6 @@ impl Device {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self), ret)]
     pub fn brightness(&self) -> Brightness {
         let [current, max] = [CURRENT_BRIGHTNESS, MAX_BRIGHTNESS].map(|s| {
             self.0
@@ -115,7 +108,6 @@ impl Device {
         Brightness::new(current, max)
     }
 
-    #[tracing::instrument(skip(self), ret)]
     pub fn class(&self) -> Class {
         self.0
             .subsystem()
@@ -124,12 +116,10 @@ impl Device {
             .unwrap_or_else(|| unreachable!())
     }
 
-    #[tracing::instrument(skip(self), ret)]
     pub fn id(&self) -> Id {
         self.0.sysname().to_string_lossy().to_string().into()
     }
 
-    #[tracing::instrument(skip(devices))]
     pub fn select<'a>(devices: &'a mut [Self], id: Option<&Id>) -> Result<&'a mut Self> {
         match id {
             Some(id) => Self::find(devices, id).ok_or(Error::SpecifiedDeviceNotFound),
@@ -137,17 +127,14 @@ impl Device {
         }
     }
 
-    #[tracing::instrument(skip(devices))]
     fn find<'a>(devices: &'a mut [Self], id: &Id) -> Option<&'a mut Self> {
         devices.iter_mut().find(|d| d.id().as_ref() == id.as_ref())
     }
 
-    #[tracing::instrument(skip_all)]
     fn find_default(devices: &mut [Self]) -> Option<&mut Self> {
         devices.iter_mut().find(|d| d.class() == Class::Backlight)
     }
 
-    #[tracing::instrument(parent = None)]
     pub fn all() -> Result<Vec<Self>> {
         [Class::Backlight, Class::Led]
             .iter()
@@ -156,7 +143,6 @@ impl Device {
             .collect()
     }
 
-    #[tracing::instrument(skip_all, ret)]
     fn is_syspath_writable(&self) -> Result<()> {
         let mut file = OpenOptions::new()
             .read(true)

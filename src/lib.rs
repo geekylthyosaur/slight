@@ -44,8 +44,6 @@ pub enum ToggleState {
 struct Flags {
     /// Pretend setting brightness
     pub pretend: bool,
-    /// Being verbose about what is going on
-    pub verbose: bool,
 }
 
 pub struct Slight {
@@ -59,10 +57,6 @@ impl Slight {
             id: id.into(),
             flags: Flags::default(),
         }
-    }
-
-    pub fn set_verbose(&mut self, verbose: bool) {
-        self.flags.verbose = verbose;
     }
 
     pub fn set_pretend(&mut self, pretend: bool) {
